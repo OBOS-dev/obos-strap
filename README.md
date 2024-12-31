@@ -1,5 +1,7 @@
 # obos-strap
 Yet another build tool for operating systems.
+## Recipes
+Recipe format can be found [here](recipes.md)
 ## Building
 ### Prerequisites
 - A C compiler
