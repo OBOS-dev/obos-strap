@@ -1,1 +1,4 @@
 /build/
+/tests/pkgs
+/tests/repos
+/tests/bootstrap
