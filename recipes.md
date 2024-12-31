@@ -1,5 +1,5 @@
 # Recipe format
-Examples can be found under tests/recipes/
+Examples can be found under [tests/recipes](tests/recipes)
 ## Valid JSON fields in a package recipe:
 #### name: string (required)
 - The name of the package.<br/>
