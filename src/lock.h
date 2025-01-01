@@ -8,3 +8,4 @@
 
 void lock();
 void unlock();
+void unlock_forced();

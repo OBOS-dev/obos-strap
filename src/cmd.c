@@ -16,7 +16,6 @@
 
 int run_command(const char* proc, string_array argv)
 {
-#if __unix__
     pid_t pid = fork();
     if (pid == -1)
     {
@@ -25,7 +24,9 @@ int run_command(const char* proc, string_array argv)
     }
     else if (pid == 0)
     {
-        execv(proc, argv.buf);
+        string_array_append(&argv, NULL);
+        execvp(proc, argv.buf);
+        perror("execv");
         exit(EXIT_FAILURE);
     }
 
@@ -37,8 +38,4 @@ int run_command(const char* proc, string_array argv)
     }
 
     return WEXITSTATUS(status);
-
-#else
-#   error run_command needs an implementation for your target.
-#endif
 }

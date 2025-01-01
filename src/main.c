@@ -6,9 +6,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "lock.h"
+
+#if HAS_LIBCURL
+#   include <curl/curl.h>
+#endif
+
 const char* help =
-"build, clean, buildall, rebuild,\n"
-"setup-env\n";
+"build, clean, buildall, rebuild, setup-env, force-unlock\n";
 
 const char* prefix_directory = "./pkgs";
 const char* bootstrap_directory = "./bootstrap";
@@ -29,6 +34,14 @@ int main(int argc, char **argv)
         printf("%s: %s", argv[0], help);
         return -1;
     }
+#if HAS_LIBCURL
+    int curl_ec = 0;
+    if ((curl_ec = curl_global_init(CURL_GLOBAL_DEFAULT)))
+    {
+        printf("curl_global_init: %d", curl_ec);
+        return -1;
+    }
+#endif
     g_argc = argc;
     g_argv = argv;
     if (strcmp(argv[1], "build") == 0)
@@ -86,7 +99,6 @@ int main(int argc, char **argv)
             printf("%s: Fatal: Could not find recipes directory.\n", argv[0]);
             return -1;
         }
-        printf("%x\n", st.st_mode);
         if (!(st.st_mode & 0400) || !(st.st_mode & 0040) || !(st.st_mode & 0004))
         {
             printf("%s: Fatal: Found recipes directory, but it is unreadable.\n", argv[0]);
@@ -121,6 +133,10 @@ int main(int argc, char **argv)
                 return -1;
             }
         }
+    }
+    else if (strcmp(argv[1], "force-unlock") == 0)
+    {
+        unlock_forced();
     }
     else
     {

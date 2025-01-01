@@ -44,7 +44,11 @@ typedef struct package {
         struct {
             const char* url;
         } web;
-    } download;
+    } source;
+    enum {
+        SOURCE_TYPE_GIT,
+        SOURCE_TYPE_WEB,
+    } source_type;
     string_array depends;
     string_array patches;
     command_array build_commands;

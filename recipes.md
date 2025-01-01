@@ -10,7 +10,7 @@ Examples can be found under [tests/recipes](tests/recipes)
 #### git-commit: string (required if git-url is present)
 - The commit to checkout<br/>
 #### url: string (required if git-url is non-present)
-- A URL to a .tar.* archive, .zip archive, or .7z archive.<br/>
+- A URL to an archive. This archive must be of format '.tar.*'.<br/>
 #### depends: string array (required)
 - Dependencies of the project. These will be build before the requested package is built.<br/>
 #### patches: path array (optional, ignored if git-url is not present)
