@@ -1,3 +1,9 @@
+/*
+ * src/main.c
+ *
+ * Copyright (c) 2024-2025 Omar Berrow
+ */
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -13,9 +19,6 @@
 #   include <curl/curl.h>
 #endif
 
-const char* help =
-"build, clean, buildall, rebuild, setup-env, force-unlock, install, installall, chroot\n";
-
 /*
  * build - DONE
  * clean - DONE
@@ -26,7 +29,7 @@ const char* help =
  * install - DONE
  * installall - TODO
  * chroot - DONE
- * git repos - TODO
+ * git repos - DONE
  */
 
 const char* prefix_directory = "./pkgs";
@@ -42,6 +45,37 @@ void install_pkg(const char* pkg);
 
 int g_argc = 0;
 char** g_argv = 0;
+
+const char* help =
+"build, clean, buildall, rebuild, setup-env, force-unlock, install, installall, chroot\n";
+
+const char* version =
+"obos-strap v0.0.0\n"
+"Copyright (c) 2024-2025 Omar Berrow\n\n"
+"From OpenBSD (sys/tree.h)\n"
+"Copyright 2002 Niels Provos <provos@citi.umich.edu>\n\
+All rights reserved.\n\
+\n\
+Redistribution and use in source and binary forms, with or without\n\
+modification, are permitted provided that the following conditions\n\
+are met:\n\
+1. Redistributions of source code must retain the above copyright\n\
+   notice, this list of conditions and the following disclaimer.\n\
+2. Redistributions in binary form must reproduce the above copyright\n\
+   notice, this list of conditions and the following disclaimer in the\n\
+   documentation and/or other materials provided with the distribution.\n\
+\n\
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR\n\
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES\n\
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.\n\
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,\n\
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT\n\
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n\
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n\
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n\
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\n\
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
+;
 
 int main(int argc, char **argv)
 {
@@ -125,6 +159,11 @@ int main(int argc, char **argv)
             }
         }
 
+        return 0;
+    }
+    else if(strcmp(argv[1], "version") == 0)
+    {
+        printf("%s", version);
         return 0;
     }
     pkg_info_directory = realpath(pkg_info_directory, NULL);

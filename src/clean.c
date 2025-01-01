@@ -1,7 +1,7 @@
 /*
  * src/clean.c
  *
- * Copyright (c) 2024 Omar Berrow
+ * Copyright (c) 2024-2025 Omar Berrow
  */
 
 #define _XOPEN_SOURCE 500

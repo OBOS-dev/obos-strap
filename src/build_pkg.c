@@ -1,7 +1,7 @@
 /*
  * src/build_pkg.c
  *
- * Copyright (c) 2024 Omar Berrow
+ * Copyright (c) 2024-2025 Omar Berrow
  */
 
 #include <stdint.h>
@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <threads.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -26,7 +27,7 @@
 typedef CURL *curl_handle;
 
 #define cleanup_curl curl_easy_cleanup
-char* curl_err = NULL;
+thread_local char* curl_err = NULL;
 
 curl_handle init_curl()
 {
@@ -92,6 +93,12 @@ static bool download_archive(curl_handle hnd, const char* url, const char* destd
     (void)(destdir);
     printf("Could not download archive %s. You must build obos-strap with libcurl installed.\n", url);
     return false;
+}
+static bool extract_archive(const char* url, const char* name, char* archive_path)
+{
+    (void)(url);
+    (void)(name);
+    (void)(archive_path);
 }
 #endif
 
@@ -186,7 +193,7 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
     return fetched;
 }
 
-static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
+bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install)
 {
     // Satisfy dependencies.
     for (size_t i = 0; i < pkg->depends.cnt; i++)
@@ -201,7 +208,7 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
         }
         printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
         // TODO: Make non-recursive?
-        if (!build_pkg_impl(pkg, curl_hnd, install))
+        if (!build_pkg_internal(pkg, curl_hnd, install))
             return false;
     }
 
@@ -340,7 +347,7 @@ void build_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_impl(pkg, curl_hnd, false);
+    build_pkg_internal(pkg, curl_hnd, false);
     cleanup_curl(curl_hnd);
     unlock();
 }
@@ -363,7 +370,7 @@ void install_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_impl(pkg, curl_hnd, true);
+    build_pkg_internal(pkg, curl_hnd, true);
     cleanup_curl(curl_hnd);
     unlock();
 }
@@ -391,7 +398,7 @@ void rebuild_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_impl(pkg, curl_hnd, install);
+    build_pkg_internal(pkg, curl_hnd, install);
     cleanup_curl(curl_hnd);
     unlock();
 }

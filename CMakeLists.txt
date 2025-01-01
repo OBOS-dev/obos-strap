@@ -1,6 +1,6 @@
 # CMakeLists.txt
 #
-# Copyright (c) 2024 Omar Berrow
+# Copyright (c) 2024-2025 Omar Berrow
 
 cmake_minimum_required(VERSION 3.10)
 
