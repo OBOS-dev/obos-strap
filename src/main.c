@@ -16,6 +16,19 @@
 const char* help =
 "build, clean, buildall, rebuild, setup-env, force-unlock, install, installall, chroot\n";
 
+/*
+ * build - DONE
+ * clean - DONE
+ * buildall - TODO
+ * rebuild - DONE
+ * setup-env - DONE
+ * force-unlock - DONE
+ * install - DONE
+ * installall - TODO
+ * chroot - DONE
+ * git repos - TODO
+ */
+
 const char* prefix_directory = "./pkgs";
 const char* bootstrap_directory = "./bootstrap";
 const char* repo_directory = "./repos";
@@ -24,8 +37,8 @@ const char* pkg_info_directory = "./pkginfo";
 
 void clean();
 void build_pkg(const char* pkg);
+void rebuild_pkg(const char* pkg);
 void install_pkg(const char* pkg);
-void rebuild(const char* pkg) {}
 
 int g_argc = 0;
 char** g_argv = 0;
@@ -184,7 +197,7 @@ int main(int argc, char **argv)
                 default: fputs("Please put y/n ", stdout); break;
             }
         } while(c != 'y');
-        rebuild(argv[2]);
+        rebuild_pkg(argv[2]);
     }
     else if (strcmp(argv[1], "force-unlock") == 0)
     {

@@ -227,6 +227,8 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
         return false;
     }
 
+    free(info);
+
     return true;
 }
 
@@ -272,6 +274,34 @@ void install_pkg(const char* name)
         return;
     }
     build_pkg_impl(pkg, curl_hnd, true);
+    cleanup_curl(curl_hnd);
+    unlock();
+}
+
+void rebuild_pkg(const char* name)
+{
+    lock();
+    package* pkg = get_package(name);
+    if (!pkg)
+    {
+        printf("%s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], name);
+        unlock();
+        return;
+    }
+    struct pkginfo* info = read_package_info(name);
+    bool install = info->build_state == BUILD_STATE_INSTALLED;
+    info->build_state = BUILD_STATE_CLEAN;
+    write_package_info(name, info);
+    free(info);
+    printf("Rebuilding %s, '%s'.\n", pkg->name, pkg->description);
+    curl_handle curl_hnd = init_curl();
+    if (!curl_hnd)
+    {
+        printf("curl_easy_init failed\n");
+        unlock();
+        return;
+    }
+    build_pkg_impl(pkg, curl_hnd, install);
     cleanup_curl(curl_hnd);
     unlock();
 }
