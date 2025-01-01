@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -94,24 +95,8 @@ static bool download_archive(curl_handle hnd, const char* url, const char* destd
 }
 #endif
 
-static bool build_pkg_impl(package* pkg, curl_handle curl_hnd)
+static bool fetch(package* pkg, curl_handle curl_hnd)
 {
-    // Satisfy dependencies.
-    for (size_t i = 0; i < pkg->depends.cnt; i++)
-    {
-        const char* depend = pkg->depends.buf[i];
-        printf("Looking for dependency %s\n", depend);
-        package* depend_pkg = get_package(depend);
-        if (!depend_pkg)
-        {
-            printf("%s: While satisfying dependencies for package %s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], pkg->name, depend);
-            return false;
-        }
-        printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
-        // TODO: Make non-recursive?
-        if (!build_pkg_impl(pkg, curl_hnd))
-            return false;
-    }
     // Fetch the repository/archive.
     printf("Entering directory %s\n", repo_directory);
     if (chdir(repo_directory) == -1)
@@ -119,7 +104,9 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd)
         perror("chdir");
         return false;
     }
+
     bool fetched = false;
+
     switch (pkg->source_type)
     {
         case SOURCE_TYPE_WEB:
@@ -141,6 +128,7 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd)
             abort();
     }
 
+    done_fetch:
     printf("Leaving directory %s\n", repo_directory);
     if (chdir("..") == -1)
     {
@@ -148,8 +136,32 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd)
         return false;
     }
 
-    if (!fetched)
-        return false;
+    return fetched;
+}
+
+static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
+{
+    // Satisfy dependencies.
+    for (size_t i = 0; i < pkg->depends.cnt; i++)
+    {
+        const char* depend = pkg->depends.buf[i];
+        printf("Looking for dependency %s\n", depend);
+        package* depend_pkg = get_package(depend);
+        if (!depend_pkg)
+        {
+            printf("%s: While satisfying dependencies for package %s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], pkg->name, depend);
+            return false;
+        }
+        printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
+        // TODO: Make non-recursive?
+        if (!build_pkg_impl(pkg, curl_hnd, install))
+            return false;
+    }
+
+    struct pkginfo* info = read_package_info(pkg->name);
+    if (info->build_state < BUILD_STATE_CONFIGURED)
+        if (!fetch(pkg, curl_hnd))
+            return false;
 
     printf("Entering directory %s\n", bootstrap_directory);
     if (chdir(bootstrap_directory) == -1)
@@ -169,18 +181,43 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd)
         return false;
     }
 
-    // Run bootstrap commands.
-    for (size_t i = 0; i < pkg->bootstrap_commands.cnt; i++)
+    if (info->build_state < BUILD_STATE_CONFIGURED)
     {
-        command* cmd = &pkg->bootstrap_commands.buf[i];
-        run_command(cmd->proc, cmd->argv);
+        // Run bootstrap commands.
+        for (size_t i = 0; i < pkg->bootstrap_commands.cnt; i++)
+        {
+            command* cmd = &pkg->bootstrap_commands.buf[i];
+            run_command(cmd->proc, cmd->argv);
+        }
+        info->build_state = BUILD_STATE_CONFIGURED;
+        gettimeofday(&info->configure_date, NULL);
+        write_package_info(pkg->name, info);
     }
 
-    // Run build commands.
-    for (size_t i = 0; i < pkg->build_commands.cnt; i++)
+    if (info->build_state < BUILD_STATE_BUILT)
     {
-        command* cmd = &pkg->build_commands.buf[i];
-        run_command(cmd->proc, cmd->argv);
+        // Run build commands.
+        for (size_t i = 0; i < pkg->build_commands.cnt; i++)
+        {
+            command* cmd = &pkg->build_commands.buf[i];
+            run_command(cmd->proc, cmd->argv);
+        }
+        info->build_state = BUILD_STATE_BUILT;
+        gettimeofday(&info->configure_date, NULL);
+        write_package_info(pkg->name, info);
+    }
+
+    if (info->build_state < BUILD_STATE_INSTALLED && install)
+    {
+        // Run install commands.
+        for (size_t i = 0; i < pkg->install_commands.cnt; i++)
+        {
+            command* cmd = &pkg->install_commands.buf[i];
+            run_command(cmd->proc, cmd->argv);
+        }
+        info->build_state = BUILD_STATE_INSTALLED;
+        gettimeofday(&info->configure_date, NULL);
+        write_package_info(pkg->name, info);
     }
 
     printf("Leaving directory %s\n", bootstrap_directory);
@@ -211,7 +248,30 @@ void build_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_impl(pkg, curl_hnd);
+    build_pkg_impl(pkg, curl_hnd, false);
+    cleanup_curl(curl_hnd);
+    unlock();
+}
+
+void install_pkg(const char* name)
+{
+    lock();
+    package* pkg = get_package(name);
+    if (!pkg)
+    {
+        printf("%s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], name);
+        unlock();
+        return;
+    }
+    printf("Building %s, '%s'.\n", pkg->name, pkg->description);
+    curl_handle curl_hnd = init_curl();
+    if (!curl_hnd)
+    {
+        printf("curl_easy_init failed\n");
+        unlock();
+        return;
+    }
+    build_pkg_impl(pkg, curl_hnd, true);
     cleanup_curl(curl_hnd);
     unlock();
 }

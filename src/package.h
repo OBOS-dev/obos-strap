@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/time.h>
 
 typedef struct string_array {
     char** buf;
@@ -59,3 +60,23 @@ typedef struct package {
 package* get_package(const char* pkg_name);
 
 int run_command(const char* proc, string_array argv);
+
+enum {
+    BUILD_STATE_CLEAN = 0,
+    BUILD_STATE_CONFIGURED,
+    BUILD_STATE_BUILT,
+    BUILD_STATE_INSTALLED,
+};
+struct pkginfo {
+    uint8_t build_state;
+    struct timeval configure_date;
+    struct timeval build_date;
+    struct timeval install_date;
+    struct timeval total_configure_time;
+    struct timeval total_build_time;
+    struct timeval total_install_time;
+};
+
+// NOTE: Creates a new struct pkginfo and writes it to disk, if it is unpresent.
+struct pkginfo* read_package_info(const char* pkg_name);
+void write_package_info(const char* pkg_name, struct pkginfo* info);

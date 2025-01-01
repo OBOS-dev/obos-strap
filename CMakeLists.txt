@@ -13,6 +13,10 @@ project (
     HOMEPAGE_URL https://github.com/oberrow/obos-strap
 )
 
+set_property(GLOBAL PROPERTY C_STANDARD 17
+                    PROPERTY C_STANDARD_REQUIRED true
+                    PROPERTY C_EXTENSIONS On)
+
 find_package(cJSON REQUIRED)
 
 find_package(CURL)

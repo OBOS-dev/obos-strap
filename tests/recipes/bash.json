@@ -1,0 +1,16 @@
+{
+    "name": "bash",
+    "description": "Bourne Again SHell",
+    "url": "https://ftp.gnu.org/gnu/bash/bash-5.2.37.tar.gz",
+    "depends": [],
+    "patches": [],
+    "bootstrap-commands": [
+        [ "${repo_directory}/bash-5.2.37/configure", "--prefix", "${prefix}" ]
+    ],
+    "build-commands": [
+        [ "make", "all" ]
+    ],
+    "install-commands": [
+        [ "make", "install" ]
+    ]
+}

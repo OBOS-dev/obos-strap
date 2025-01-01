@@ -12,16 +12,18 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/sysinfo.h>
+#include <errno.h>
 #include <ctype.h>
 
 #include "package.h"
 #include "path.h"
 
 #include <cjson/cJSON.h>
-#include <wctype.h>
 
 void string_array_append(string_array* arr, const char* str)
 {
@@ -173,8 +175,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             // Parse
             if (strncmp(subst_str, "bootstrap_directory", subst_len) == 0)
             {
-                subst_str = realpath(bootstrap_directory, NULL);
-                subst_free = true;
+                subst_str = bootstrap_directory;
                 subst_len = strlen(subst_str);
             }
             else if (strncmp(subst_str, "name", subst_len) == 0)
@@ -184,14 +185,12 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             }
             else if (strncmp(subst_str, "repo_directory", subst_len) == 0)
             {
-                subst_str = realpath(repo_directory, NULL);
-                subst_free = true;
+                subst_str = repo_directory;
                 subst_len = strlen(subst_str);
             }
             else if (strncmp(subst_str, "prefix", subst_len) == 0)
             {
-                subst_str = realpath(prefix_directory, NULL);
-                subst_free = true;
+                subst_str = prefix_directory;
                 subst_len = strlen(subst_str);
             }
             else if (strncmp(subst_str, "nproc", subst_len) == 0)
@@ -285,7 +284,6 @@ static int parse_command_array(const char* fieldname, package* pkg, command_arra
                 iter = dollar_sign + nSubstituted;
             } while(1);
             arr->buf[i].argv.buf[j] = arg;
-            printf("%s\n", arr->buf[i].argv.buf[j]);
             if (j == 0)
                 arr->buf[i].proc = arg;
         }
@@ -434,4 +432,78 @@ package* get_package(const char* pkg_name)
     pkg->description = get_str_field(context, "description");
 
     return pkg;
+}
+
+#define pkg_info_format "%s/pkginfo_%s.bin"
+struct pkginfo* read_package_info(const char* pkg_name)
+{
+    size_t pathlen = snprintf(NULL, 0, pkg_info_format, pkg_info_directory, pkg_name);
+    char* path = malloc(pathlen+1);
+    snprintf(path, pathlen+1, pkg_info_format, pkg_info_directory, pkg_name);
+    FILE* file = fopen(path, "r+");
+    if (!file)
+    {
+        if (errno != ENOENT)
+            perror("fopen");
+        else {
+            struct pkginfo* info = calloc(1, sizeof(struct pkginfo));
+            info->build_state = BUILD_STATE_CLEAN;
+            file = fopen(path, "w");
+            if (file)
+            {
+                fwrite(info, sizeof(*info), 1, file);
+                fclose(file);
+            }
+            free(path);
+            return info;
+        }
+        return NULL;
+    }
+    free(path);
+    struct pkginfo* info = malloc(sizeof(struct pkginfo));
+    fread(info, sizeof(*info), 1, file);
+    fclose(file);
+
+    if (info->build_state > BUILD_STATE_INSTALLED)
+    {
+        fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+
+    struct timeval current_time = {};
+    gettimeofday(&current_time, NULL);
+
+    if (info->configure_date.tv_sec > current_time.tv_sec)
+    {
+        fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+    if (info->build_date.tv_sec > current_time.tv_sec)
+    {
+        fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+    if (info->install_date.tv_sec > current_time.tv_sec)
+    {
+        fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+
+    return info;
+}
+
+void write_package_info(const char* pkg_name, struct pkginfo* info)
+{
+    size_t pathlen = snprintf(NULL, 0, pkg_info_format, pkg_info_directory, pkg_name);
+    char* path = malloc(pathlen+1);
+    snprintf(path, pathlen+1, pkg_info_format, pkg_info_directory, pkg_name);
+    FILE* file = fopen(path, "r+");
+    free(path);
+    if (!file)
+    {
+        perror("fopen");
+        return;
+    }
+    fwrite(info, sizeof(*info), 1, file);
+    fclose(file);
 }
