@@ -27,7 +27,7 @@ static int remove_cb(const char *fpath, const struct stat *sb, int typeflag, str
     return 0;
 }
 
-static void remove_recursively(const char* path)
+void remove_recursively(const char* path)
 {
     nftw(path, remove_cb, 64, FTW_DEPTH | FTW_PHYS);
 }

@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.10)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/")
 
+option (OBOS_STRAP_ENABLE_GIT "Add git repository support for sources." OFF)
+
 project (
     obos-strap
     LANGUAGES C
@@ -20,12 +22,6 @@ set_property(GLOBAL PROPERTY C_STANDARD 17
 find_package(cJSON REQUIRED)
 
 find_package(CURL)
-find_package(PkgConfig)
-if (PkgConfig_FOUND)
-    pkg_check_modules(LIBGIT2 libgit2)
-else()
-    set (LIBGIT2_FOUND false)
-endif ()
 
 if (${CURL_FOUND})
     add_compile_definitions(HAS_LIBCURL=1)
@@ -34,8 +30,10 @@ else()
     set(HAS_CURL 0)
 endif()
 
-if (${LIBGIT2_FOUND})
-    add_compile_definitions(HAS_LIBCURL=1)
+if (${OBOS_STRAP_ENABLE_GIT})
+    add_compile_definitions(ENABLE_GIT=1)
+else()
+    add_compile_definitions(ENABLE_GIT=0)
 endif()
 
 add_subdirectory("src/")

@@ -5,7 +5,6 @@
     "depends": [],
     "patches": [],
     "bootstrap-commands": [
-        [ "${repo_directory}/hello-2.12.1/bootstrap" ],
         [ "${repo_directory}/hello-2.12.1/configure", "--prefix", "${prefix}" ]
     ],
     "build-commands": [

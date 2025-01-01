@@ -13,8 +13,19 @@ Examples can be found under [tests/recipes](tests/recipes)
 - A URL to an archive. This archive must be of format '.tar.*'.<br/>
 #### depends: string array (required)
 - Dependencies of the project. These will be build before the requested package is built.<br/>
-#### patches: path array (optional, ignored if git-url is not present)
+#### patches: patch array (optional)
 - An array of patches that should be applied before bootstrap commands are run.<br/>
+- A patch is defined as follows:
+```json
+"patches": [
+    {
+        "modifies": "path/to/file",
+        "patch": "path/to/patch"
+    }
+]
+- The "modifies" field is relative to ${repo_directory}
+- The "patch" field is relative to the recipes directory.
+```
 #### bootstrap-commands: array of string arrays (required)
 - Commands run to "bootstrap" the build. These commands will be run under ${bootstrap_directory}/${name}/<br/>
 #### build-commands: array of string arrays (required)

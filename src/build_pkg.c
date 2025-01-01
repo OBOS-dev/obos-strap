@@ -39,7 +39,7 @@ curl_handle init_curl()
     return hnd;
 }
 
-static char* download_archive(curl_handle hnd, const char* url, const char* destdir)
+static char* download_archive(curl_handle hnd, const char* url)
 {
     char *template = malloc(18);
     memcpy(template, "obos-strap-XXXXXX", 18);
@@ -95,6 +95,48 @@ static bool download_archive(curl_handle hnd, const char* url, const char* destd
 }
 #endif
 
+#if ENABLE_GIT
+void remove_recursively(const char* path);
+static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
+{
+    struct stat st = {};
+    if (stat(pkg_name, &st))
+        remove_recursively(pkg_name);
+
+    // TODO: Use a library?
+    string_array argv = {};
+    string_array_append(&argv, "git");
+    string_array_append(&argv, "clone");
+    string_array_append(&argv, url);
+    string_array_append(&argv, "-b");
+    string_array_append(&argv, hash);
+    int ret = run_command("git", argv);
+    if (ret != EXIT_SUCCESS)
+    {
+        printf("Git failed with exit code %d\n", ret);
+        printf("Leaving directory %s\n", pkg_name);
+        if (chdir("..") == -1)
+        {
+            perror("chdir");
+            remove_recursively(pkg_name);
+            return false;
+        }
+        remove_recursively(pkg_name);
+        return false;
+    }
+
+    string_array_free(&argv);
+    argv = (string_array){};
+
+    return true;
+}
+#else
+static bool clone_repository(const char *pkg_name, const char* url, const char* hash)
+{
+    return false;
+}
+#endif
+
 static bool fetch(package* pkg, curl_handle curl_hnd)
 {
     // Fetch the repository/archive.
@@ -111,7 +153,7 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
     {
         case SOURCE_TYPE_WEB:
         {
-            char* archive = download_archive(curl_hnd, pkg->source.web.url, pkg->name);
+            char* archive = download_archive(curl_hnd, pkg->source.web.url);
             if (!archive)
             {
                 fetched = false;
@@ -120,6 +162,11 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
             fetched = extract_archive(pkg->source.web.url, pkg->name, archive);
             remove(archive);
             free(archive);
+            break;
+        }
+        case SOURCE_TYPE_GIT:
+        {
+            fetched = clone_repository(pkg->name, pkg->source.git.git_url, pkg->source.git.git_commit);
             break;
         }
         default:
@@ -159,9 +206,13 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
     }
 
     struct pkginfo* info = read_package_info(pkg->name);
-    if (info->build_state < BUILD_STATE_CONFIGURED)
+    if (info->build_state < BUILD_STATE_FETCHED)
+    {
         if (!fetch(pkg, curl_hnd))
             return false;
+        info->build_state = BUILD_STATE_FETCHED;
+        write_package_info(pkg->name, info);
+    }
 
     printf("Entering directory %s\n", bootstrap_directory);
     if (chdir(bootstrap_directory) == -1)
@@ -187,7 +238,20 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
         for (size_t i = 0; i < pkg->bootstrap_commands.cnt; i++)
         {
             command* cmd = &pkg->bootstrap_commands.buf[i];
-            run_command(cmd->proc, cmd->argv);
+            int ec = run_command(cmd->proc, cmd->argv);
+            if (ec != EXIT_SUCCESS)
+            {
+                printf("%s exited with code %d\n", cmd->proc, ec);
+                free(info);
+                printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+                if (chdir("../../") == -1)
+                {
+                    perror("chdir");
+                    return false;
+                }
+
+                return false;
+            }
         }
         info->build_state = BUILD_STATE_CONFIGURED;
         gettimeofday(&info->configure_date, NULL);
@@ -200,7 +264,20 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
         for (size_t i = 0; i < pkg->build_commands.cnt; i++)
         {
             command* cmd = &pkg->build_commands.buf[i];
-            run_command(cmd->proc, cmd->argv);
+            int ec = run_command(cmd->proc, cmd->argv);
+            if (ec != EXIT_SUCCESS)
+            {
+                printf("%s exited with code %d\n", cmd->proc, ec);
+                free(info);
+                printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+                if (chdir("../../") == -1)
+                {
+                    perror("chdir");
+                    return false;
+                }
+
+                return false;
+            }
         }
         info->build_state = BUILD_STATE_BUILT;
         gettimeofday(&info->configure_date, NULL);
@@ -213,7 +290,20 @@ static bool build_pkg_impl(package* pkg, curl_handle curl_hnd, bool install)
         for (size_t i = 0; i < pkg->install_commands.cnt; i++)
         {
             command* cmd = &pkg->install_commands.buf[i];
-            run_command(cmd->proc, cmd->argv);
+            int ec = run_command(cmd->proc, cmd->argv);
+            if (ec != EXIT_SUCCESS)
+            {
+                printf("%s exited with code %d\n", cmd->proc, ec);
+                free(info);
+                printf("Leaving directory %s\n", bootstrap_directory);
+                if (chdir("..") == -1)
+                {
+                    perror("chdir");
+                    return false;
+                }
+
+                return false;
+            }
         }
         info->build_state = BUILD_STATE_INSTALLED;
         gettimeofday(&info->configure_date, NULL);
