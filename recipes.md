@@ -27,6 +27,7 @@ bootstrap_directory: Output of bootstrap commands goes here, as well as built bi
                name: The name field of the package.
      repo_directory: Cloned repositories and decompressed archives.
              prefix: The prefix directory.
+              nproc: The CPU count of the system.
 ```
 - To access these, do ${insert_name_here}
 - To access an environment variable, do $ENV
