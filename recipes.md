@@ -11,7 +11,7 @@ Examples can be found under [tests/recipes](tests/recipes)
 - The commit to checkout<br/>
 #### url: string (required if git-url is non-present)
 - A URL to a .tar.* archive, .zip archive, or .7z archive.<br/>
-#### depends; string array (required)
+#### depends: string array (required)
 - Dependencies of the project. These will be build before the requested package is built.<br/>
 #### patches: path array (optional, ignored if git-url is not present)
 - An array of patches that should be applied before bootstrap commands are run.<br/>
