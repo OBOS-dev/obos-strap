@@ -107,25 +107,32 @@ static bool extract_archive(const char* url, const char* name, char* archive_pat
 static bool apply_patch(const char* patch_path, const char* modifies_path)
 {
     char* patch = realpath(patch_path, NULL);
-    printf("Entering directory %s\n", repo_directory);
+    // printf("Entering directory %s\n", repo_directory);
     if (chdir(repo_directory) == -1)
     {
         perror("chdir");
         return false;
     }
     char* modifies = realpath(modifies_path, NULL);
-    printf("Leaving directory %s\n", repo_directory);
+
+    if (!modifies || !strlen(modifies))
+    {
+        // fprintf(stderr, "Could not find file to patch at %s/%s\n", repo_directory, modifies_path);
+        // return false;
+        // This behaviour is invalid, we should make the file path instead.
+        char* pwd = realpath(".", NULL);
+        size_t path_len = snprintf(NULL, 0, "%s/%s", pwd, modifies_path);
+        modifies = malloc(path_len+1);
+        snprintf(modifies, path_len + 1, "%s/%s", pwd, modifies_path);
+    }
+
+    // printf("Leaving directory %s\n", repo_directory);
     if (chdir("..") == -1)
     {
         perror("chdir");
         return false;
     }
 
-    if (!modifies || !strlen(modifies))
-    {
-        fprintf(stderr, "Could not find file to patch at %s/%s\n", repo_directory, modifies);
-        return false;
-    }
     if (!patch || !strlen(patch))
     {
         fprintf(stderr, "Could not find patch at %s\n", patch_path);
@@ -253,7 +260,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
         printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
         // TODO: Make non-recursive?
-        if (!build_pkg_internal(pkg, curl_hnd, install, satisfy_dependencies))
+        if (!build_pkg_internal(depend_pkg, curl_hnd, install, satisfy_dependencies))
             return false;
     }
 
@@ -339,11 +346,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
-                    free(info);
                     return false;
                 }
 
-                free(info);
                 return false;
             }
         }

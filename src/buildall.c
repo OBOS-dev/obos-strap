@@ -110,8 +110,6 @@ static package_node* make_package_node(const char* pkg, package_node* parent)
         }
         what = (package_node){.name=dependency};
         package_node* dependency_node = make_package_node(dependency, node);
-        if (dependency_node->info->build_state == BUILD_STATE_INSTALLED)
-            continue; // for a dependency to be found by the compiler, it should be in the sysroot (aka installed)
         node->missing_dep_count++;
         pthread_mutex_lock(&dependency_node->dependants_mutex);
         add_dependant(dependency_node, node);
@@ -258,10 +256,9 @@ void buildall()
     sem_post(&awake_threads);
     int awake_thread_count = 0;
     do {
-        sem_wait(&awake_threads);
+        // sem_wait(&awake_threads);
         sem_getvalue(&awake_threads, &awake_thread_count);
-    } while(awake_thread_count != 0);
-
+    } while(awake_thread_count != nproc);
     sem_destroy(&awake_threads);
 
     cleanup_curl(curl_hnd);
