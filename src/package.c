@@ -70,6 +70,26 @@ void command_array_free(command_array* arr)
     free(arr->buf);
 }
 
+void patch_array_append(patch_array* arr, patch* ptch)
+{
+    arr->buf = realloc(arr->buf, (arr->cnt+1)*sizeof(patch));
+    memcpy(&arr->buf[arr->cnt++], ptch, sizeof(*ptch));
+}
+
+patch* patch_array_at(patch_array* arr, size_t idx)
+{
+    if (idx >= arr->cnt)
+        return NULL;
+    return &arr->buf[idx];
+}
+
+void patch_array_free(patch_array* arr)
+{
+    for (size_t i = 0; i < arr->cnt; i++)
+        free(&arr->buf[i]);
+    free(arr->buf);
+}
+
 static const char* get_str_field(cJSON* parent, const char* fieldname)
 {
     cJSON* child = cJSON_GetObjectItem(parent, fieldname);
@@ -292,6 +312,37 @@ static int parse_command_array(const char* fieldname, package* pkg, command_arra
     return 0;
 }
 
+int get_patch_array(cJSON* parent, const char* fieldname, patch_array* arr)
+{
+    cJSON* child = cJSON_GetObjectItem(parent, fieldname);
+    if (!child)
+        return -1;
+    cJSON *i = NULL;
+    cJSON_ArrayForEach(i, child)
+    {
+        if (!cJSON_IsObject(i))
+        {
+            printf("%s: Invalid array value in package JSON in field '%s', ignoring.\n", g_argv[0], fieldname);
+            continue;
+        }
+        patch ptch = {};
+        ptch.patch = get_str_field(i, "patch");
+        if (!ptch.patch)
+        {
+            printf("%s: Invalid array value in package JSON in field '%s', ignoring.\n", g_argv[0], fieldname);
+            continue;
+        }
+        ptch.modifies = get_str_field(i, "modifies");
+        if (!ptch.modifies)
+        {
+            printf("%s: Invalid array value in package JSON in field '%s', ignoring.\n", g_argv[0], fieldname);
+            continue;
+        }
+        patch_array_append(arr, &ptch);
+    }
+    return 0;
+}
+
 package* get_package(const char* pkg_name)
 {
     if (strlen(pkg_name) == 0)
@@ -365,7 +416,6 @@ package* get_package(const char* pkg_name)
             cJSON_free(context);
             return NULL;
         }
-        get_str_array_field(context, "patches", &pkg->patches);
         pkg->source_type = SOURCE_TYPE_GIT;
     }
     else if (cJSON_HasObjectItem(context, "url"))
@@ -381,6 +431,8 @@ package* get_package(const char* pkg_name)
         cJSON_free(context);
         return NULL;
     }
+
+    get_patch_array(context, "patches", &pkg->patches);
 
     if (get_command_array(context, "bootstrap-commands", &pkg->bootstrap_commands) != 0)
     {

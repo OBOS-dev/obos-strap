@@ -102,6 +102,39 @@ static bool extract_archive(const char* url, const char* name, char* archive_pat
 }
 #endif
 
+// Applies a patch 'patch_path' to the file 'modifies_path'
+// This is run in the initial CWD of the process.
+static bool apply_patch(const char* patch_path, const char* modifies_path)
+{
+    char* patch = realpath(patch_path, NULL);
+    printf("Entering directory %s\n", repo_directory);
+    if (chdir(repo_directory) == -1)
+    {
+        perror("chdir");
+        return false;
+    }
+    char* modifies = realpath(modifies_path, NULL);
+    printf("Leaving directory %s\n", repo_directory);
+    if (chdir("..") == -1)
+    {
+        perror("chdir");
+        return false;
+    }
+
+    // TODO: Use a library?
+    string_array argv = {};
+    string_array_append(&argv, "patch");
+    string_array_append(&argv, "-u");
+    string_array_append(&argv, modifies);
+    string_array_append(&argv, "-i");
+    string_array_append(&argv, patch);
+    bool res = run_command(argv.buf[0], argv);
+
+    free(modifies);
+    free(patch);
+    return res;
+}
+
 #if ENABLE_GIT
 void remove_recursively(const char* path);
 static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
@@ -217,6 +250,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     {
         if (!fetch(pkg, curl_hnd))
             return false;
+        for (size_t i = 0; i < pkg->patches.cnt; i++)
+            apply_patch(pkg->patches.buf[i].patch, pkg->patches.buf[i].modifies);
         info->build_state = BUILD_STATE_FETCHED;
         write_package_info(pkg->name, info);
     }

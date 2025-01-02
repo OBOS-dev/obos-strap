@@ -33,10 +33,24 @@ void command_array_append(command_array* arr, command* cmd);
 command* command_array_at(command_array* arr, size_t idx);
 void command_array_free(command_array* arr);
 
+typedef struct patch {
+    const char* patch;
+    const char* modifies;
+} patch;
+typedef struct patch_array {
+    patch* buf;
+    size_t cnt;
+} patch_array;
+void patch_array_append(patch_array* arr, patch* ptch);
+patch* patch_array_at(patch_array* arr, size_t idx);
+void patch_array_free(patch_array* arr);
+
 typedef struct package {
     const char* config_file_path;
+
     const char *name;
     const char* description;
+
     union {
         struct {
             const char* git_commit;
@@ -50,8 +64,10 @@ typedef struct package {
         SOURCE_TYPE_GIT,
         SOURCE_TYPE_WEB,
     } source_type;
+    patch_array patches;
+
     string_array depends;
-    string_array patches;
+
     command_array build_commands;
     command_array install_commands;
     command_array bootstrap_commands;
