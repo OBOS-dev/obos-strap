@@ -121,6 +121,17 @@ static bool apply_patch(const char* patch_path, const char* modifies_path)
         return false;
     }
 
+    if (!modifies || !strlen(modifies))
+    {
+        fprintf(stderr, "Could not find file to patch at %s/%s\n", repo_directory, modifies);
+        return false;
+    }
+    if (!patch || !strlen(patch))
+    {
+        fprintf(stderr, "Could not find patch at %s\n", patch_path);
+        return false;
+    }
+
     // TODO: Use a library?
     string_array argv = {};
     string_array_append(&argv, "patch");
@@ -128,7 +139,7 @@ static bool apply_patch(const char* patch_path, const char* modifies_path)
     string_array_append(&argv, modifies);
     string_array_append(&argv, "-i");
     string_array_append(&argv, patch);
-    bool res = run_command(argv.buf[0], argv);
+    bool res = !run_command(argv.buf[0], argv);
 
     free(modifies);
     free(patch);
@@ -249,9 +260,18 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (info->build_state < BUILD_STATE_FETCHED)
     {
         if (!fetch(pkg, curl_hnd))
+        {
+            free(info);
             return false;
+        }
         for (size_t i = 0; i < pkg->patches.cnt; i++)
-            apply_patch(pkg->patches.buf[i].patch, pkg->patches.buf[i].modifies);
+        {
+            if (!apply_patch(pkg->patches.buf[i].patch, pkg->patches.buf[i].modifies))
+            {
+                free(info);
+                return false;
+            }
+        }
         info->build_state = BUILD_STATE_FETCHED;
         write_package_info(pkg->name, info);
     }
@@ -260,6 +280,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (chdir(bootstrap_directory) == -1)
     {
         perror("chdir");
+        free(info);
         return false;
     }
 
@@ -271,6 +292,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (fchdir(dir_fd) == -1)
     {
         perror("chdir");
+        free(info);
         return false;
     }
 
@@ -289,6 +311,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
+                    free(info);
                     return false;
                 }
 
@@ -315,9 +338,11 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
+                    free(info);
                     return false;
                 }
 
+                free(info);
                 return false;
             }
         }
@@ -341,6 +366,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("..") == -1)
                 {
                     perror("chdir");
+                    free(info);
                     return false;
                 }
 
@@ -356,6 +382,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (chdir("..") == -1)
     {
         perror("chdir");
+        free(info);
         return false;
     }
 
