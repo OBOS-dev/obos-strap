@@ -139,6 +139,7 @@ static bool apply_patch(const char* patch_path, const char* modifies_path)
     string_array_append(&argv, modifies);
     string_array_append(&argv, "-i");
     string_array_append(&argv, patch);
+    string_array_append(&argv, "-t");
     bool res = !run_command(argv.buf[0], argv);
 
     free(modifies);
