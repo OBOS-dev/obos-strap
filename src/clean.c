@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <ftw.h>
 #include <unistd.h>
 
@@ -16,6 +17,8 @@
 #if _XOPEN_SOURCE >= 500
 static int remove_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
+    if ((strcmp(fpath, "README") == 0) || (strcmp(fpath, pkg_info_directory) == 0))
+        return 0;
     switch (typeflag) {
         case FTW_D:
             rmdir(fpath);
@@ -53,8 +56,5 @@ static void remove_recursively(const char* path)
 
 void clean()
 {
-    remove_recursively(prefix_directory);
-    remove_recursively(repo_directory);
-    remove_recursively(bootstrap_directory);
     remove_recursively(pkg_info_directory);
 }

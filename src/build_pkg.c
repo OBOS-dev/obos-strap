@@ -193,10 +193,10 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
     return fetched;
 }
 
-bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install)
+bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies)
 {
     // Satisfy dependencies.
-    for (size_t i = 0; i < pkg->depends.cnt; i++)
+    for (size_t i = 0; i < pkg->depends.cnt && satisfy_dependencies; i++)
     {
         const char* depend = pkg->depends.buf[i];
         printf("Looking for dependency %s\n", depend);
@@ -208,7 +208,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install)
         }
         printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
         // TODO: Make non-recursive?
-        if (!build_pkg_internal(pkg, curl_hnd, install))
+        if (!build_pkg_internal(pkg, curl_hnd, install, satisfy_dependencies))
             return false;
     }
 
@@ -347,7 +347,7 @@ void build_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_internal(pkg, curl_hnd, false);
+    build_pkg_internal(pkg, curl_hnd, false, true);
     cleanup_curl(curl_hnd);
     unlock();
 }
@@ -370,7 +370,7 @@ void install_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_internal(pkg, curl_hnd, true);
+    build_pkg_internal(pkg, curl_hnd, true, true);
     cleanup_curl(curl_hnd);
     unlock();
 }
@@ -398,7 +398,7 @@ void rebuild_pkg(const char* name)
         unlock();
         return;
     }
-    build_pkg_internal(pkg, curl_hnd, install);
+    build_pkg_internal(pkg, curl_hnd, install, true);
     cleanup_curl(curl_hnd);
     unlock();
 }

@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #include "lock.h"
 
@@ -42,12 +43,13 @@ void clean();
 void build_pkg(const char* pkg);
 void rebuild_pkg(const char* pkg);
 void install_pkg(const char* pkg);
+void buildall();
 
 int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, buildall, rebuild, setup-env, force-unlock, install, installall, chroot\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot\n";
 
 const char* version =
 "obos-strap v0.0.0\n"
@@ -79,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
 
 int main(int argc, char **argv)
 {
+    argv[0] = basename(argv[0]);
     if (argc < 2)
     {
         printf("%s: %s", argv[0], help);
@@ -201,6 +204,22 @@ int main(int argc, char **argv)
         }
         install_pkg(argv[2]);
     }
+    else if (strcmp(argv[1], "build-all") == 0 || strcmp(argv[1], "install-all") == 0)
+    {
+        printf("%s: Installing all packages. This can take a long time.\nContinue? y/n ", argv[0]);
+        char c = 0;
+        do {
+            c = getchar();
+            switch (c)
+            {
+                case 'y': break;
+                case 'n': puts("Abort"); return 1;
+                case '\n': break;
+                default: fputs("Please put y/n ", stdout); break;
+            }
+        } while(c != 'y');
+        buildall();
+    }
     else if (strcmp(argv[1], "clean") == 0)
     {
         printf("%s: Cleaning build directory.\nContinue? y/n ", argv[0]);
@@ -210,7 +229,7 @@ int main(int argc, char **argv)
             switch (c)
             {
                 case 'y': break;
-                case 'n': puts("Abort\n"); return 1;
+                case 'n': puts("Abort"); return 1;
                 case '\n': break;
                 default: fputs("Please put y/n ", stdout); break;
             }
@@ -231,7 +250,7 @@ int main(int argc, char **argv)
             switch (c)
             {
                 case 'y': break;
-                case 'n': puts("Abort\n"); return 1;
+                case 'n': puts("Abort"); return 1;
                 case '\n': break;
                 default: fputs("Please put y/n ", stdout); break;
             }

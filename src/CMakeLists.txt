@@ -4,8 +4,12 @@
 
 add_executable(obos-strap
     "main.c" "clean.c" "build_pkg.c" "package.c"
-    "lock.c" "cmd.c"
+    "lock.c" "cmd.c" "buildall.c"
 )
+
+target_compile_options(obos-strap PRIVATE "-Wall"
+                                  PRIVATE "-Wextra"
+                                  PRIVATE "-Wno-unused-label")
 
 target_link_libraries(obos-strap PRIVATE "${CJSON_LIBRARIES}")
 target_include_directories(obos-strap PRIVATE "${CJSON_INCLUDE_DIR}")
