@@ -24,7 +24,7 @@ Examples can be found under [tests/recipes](tests/recipes)
     }
 ]
 - The "modifies" field is relative to ${repo_directory}
-- The "patch" field is relative to the recipes directory.
+- The "patch" field is relative to the directory obos-strap was run in.
 ```
 #### bootstrap-commands: array of string arrays (required)
 - Commands run to "bootstrap" the build. These commands will be run under ${bootstrap_directory}/${name}/<br/>
