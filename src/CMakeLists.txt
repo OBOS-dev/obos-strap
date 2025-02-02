@@ -7,6 +7,8 @@ add_executable(obos-strap
     "lock.c" "cmd.c" "buildall.c"
 )
 
+target_compile_definitions(obos-strap PRIVATE OBOS_STRAP_HOST_TRIPLET=\"${OBOS_STRAP_HOST_TRIPLET}\")
+
 target_compile_options(obos-strap PRIVATE "-Wall"
                                   PRIVATE "-Wextra"
                                   PRIVATE "-Wno-unused-label")

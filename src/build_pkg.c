@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #include "package.h"
 #include "path.h"
@@ -159,7 +160,7 @@ void remove_recursively(const char* path);
 static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
 {
     struct stat st = {};
-    if (stat(pkg_name, &st))
+    if (stat(pkg_name, &st) == 0)
         remove_recursively(pkg_name);
 
     // TODO: Use a library?
@@ -192,6 +193,7 @@ static bool clone_repository(const char* pkg_name, const char* url, const char* 
 #else
 static bool clone_repository(const char *pkg_name, const char* url, const char* hash)
 {
+    printf("%s: FATAL: Compiled without git support enabled, and git repository package was found.\n", g_argv[0]);
     return false;
 }
 #endif
@@ -319,15 +321,24 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
-                    free(info);
                     return false;
                 }
 
                 return false;
             }
         }
+
         info->build_state = BUILD_STATE_CONFIGURED;
+
+        const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+        info->host_triplet_len = strlen(triplet);
+        info = realloc(info, sizeof(*info) + info->host_triplet_len);
+	assert(info);
+        memcpy(info->host_triplet, triplet, info->host_triplet_len);
+        info->cross_compiled = g_config.cross_compiling;
+
         gettimeofday(&info->configure_date, NULL);
+
         write_package_info(pkg->name, info);
     }
 
@@ -372,7 +383,6 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
                 if (chdir("..") == -1)
                 {
                     perror("chdir");
-                    free(info);
                     return false;
                 }
 

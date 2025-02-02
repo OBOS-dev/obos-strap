@@ -36,4 +36,7 @@ else()
     add_compile_definitions(ENABLE_GIT=0)
 endif()
 
+execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE OBOS_STRAP_HOST_TRIPLET)
+string(STRIP "${OBOS_STRAP_HOST_TRIPLET}" OBOS_STRAP_HOST_TRIPLET)
+
 add_subdirectory("src/")

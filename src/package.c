@@ -210,7 +210,17 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             }
             else if (strncmp(subst_str, "prefix", subst_len) == 0)
             {
+                subst_str = pkg->host_package ? host_prefix_directory : prefix_directory;
+                subst_len = strlen(subst_str);
+            }
+            else if (strncmp(subst_str, "target_prefix", subst_len) == 0)
+            {
                 subst_str = prefix_directory;
+                subst_len = strlen(subst_str);
+            }
+            else if (strncmp(subst_str, "host_prefix", subst_len) == 0)
+            {
+                subst_str = host_prefix_directory;
                 subst_len = strlen(subst_str);
             }
             else if (strncmp(subst_str, "nproc", subst_len) == 0)
@@ -220,6 +230,11 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_len = snprintf(NULL, 0, "%d", nproc);
                 subst_str = malloc(subst_len+1);
                 snprintf((char*)subst_str, subst_len+1, "%d", nproc);
+            }
+            else if (strncmp(subst_str, "target_triplet", subst_len) == 0)
+            {
+                subst_str = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+                subst_len = strlen(subst_str);
             }
             else
             {
@@ -396,6 +411,11 @@ package* get_package(const char* pkg_name)
         return NULL;
     }
 
+    do {
+        cJSON* child = cJSON_GetObjectItem(context, "host-package");
+        pkg->host_package = !child ? false : (!!cJSON_GetNumberValue(child) && g_config.cross_compiling);
+    } while (0);
+
     if (cJSON_HasObjectItem(context, "git-url"))
     {
         pkg->source.git.git_url = get_str_field(context, "git-url");
@@ -512,13 +532,21 @@ struct pkginfo* read_package_info(const char* pkg_name)
         return NULL;
     }
     free(path);
-    struct pkginfo* info = malloc(sizeof(struct pkginfo));
-    fread(info, sizeof(*info), 1, file);
+    struct stat st = {};
+    fstat(fileno(file), &st);
+    struct pkginfo* info = malloc(st.st_size+1);
+    fread(info, st.st_size, 1, file);
     fclose(file);
 
     if (info->build_state > BUILD_STATE_INSTALLED)
     {
         fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+
+    if (info->host_triplet_len == 0 && info->build_state >= BUILD_STATE_CONFIGURED)
+    {
+        fprintf(stderr, "%s: Outdated package info for package %s. Run %s rebuild %s to rebuild the package.\n", g_argv[0], pkg_name, g_argv[0], pkg_name);
         exit(-1);
     }
 
@@ -530,15 +558,40 @@ struct pkginfo* read_package_info(const char* pkg_name)
         fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
         exit(-1);
     }
+
     if (info->build_date.tv_sec > current_time.tv_sec)
     {
         fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
         exit(-1);
     }
+
     if (info->install_date.tv_sec > current_time.tv_sec)
     {
         fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
         exit(-1);
+    }
+
+    if (info->cross_compiled != 0 && info->cross_compiled != 1)
+    {
+        fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
+        exit(-1);
+    }
+
+    if (info->cross_compiled != g_config.cross_compiling && info->build_state >= BUILD_STATE_CONFIGURED)
+    {
+        fprintf(stderr, "%s: Package %s was %scross compiled, but current configuration says we are %scross compiling.\n", 
+            g_argv[0], pkg_name,
+            info->cross_compiled ? "" : "not ",
+            g_config.cross_compiling ? "" : "not ");
+        exit(-1);
+    }
+
+    if (strncmp(info->host_triplet, g_config.host_triplet, info->host_triplet_len) != 0 &&
+        strncmp(info->host_triplet, g_config.target_triplet, info->host_triplet_len) != 0 && 
+        info->build_state > BUILD_STATE_CONFIGURED)
+    {
+        fprintf(stderr, "%s: Package %s triplet mismatch.\n", g_argv[0], pkg_name);
+        info->build_state = BUILD_STATE_CLEAN;
     }
 
     return info;
@@ -556,6 +609,6 @@ void write_package_info(const char* pkg_name, struct pkginfo* info)
         perror("fopen");
         return;
     }
-    fwrite(info, sizeof(*info), 1, file);
+    fwrite(info, sizeof(*info)+info->host_triplet_len, 1, file);
     fclose(file);
 }

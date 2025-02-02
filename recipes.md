@@ -33,13 +33,18 @@ Examples can be found under [tests/recipes](tests/recipes)
 - Commands run to build the package. These commands will be run under ${bootstrap_directory}/${name}/<br/>
 #### install-commands: array of string arrays (required)
 - Commands run to install the package into ${prefix_directory}. These commands will be run under ${bootstrap_directory}/${name}/<br/>
+#### host-package: boolean (optional, defaults to false)
+- Whether this package is a host package or target package. Ignored if not cross compiling.
 ## Valid substitution strings in commands:
 ```
 bootstrap_directory: Output of bootstrap commands goes here, as well as built binaries
                name: The name field of the package.
      repo_directory: Cloned repositories and decompressed archives.
-             prefix: The prefix directory.
+             prefix: The prefix directory. This can change depending on whether this is a host package or not.
+        host_prefix: The host prefix directory.
+      target_prefix: The target prefix directory.
               nproc: The CPU count of the system.
+     target_triplet: The target triplet.
 ```
 - To access these, do ${insert_name_here}
 - To access an environment variable, do $ENV

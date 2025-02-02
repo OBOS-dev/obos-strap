@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 typedef struct string_array {
     char** buf;
@@ -71,6 +72,8 @@ typedef struct package {
     command_array build_commands;
     command_array install_commands;
     command_array bootstrap_commands;
+
+    bool host_package;
 } package;
 
 package* get_package(const char* pkg_name);
@@ -89,7 +92,10 @@ struct pkginfo {
     struct timeval configure_date;
     struct timeval build_date;
     struct timeval install_date;
-    uint64_t resv[6];
+    uint64_t cross_compiled;
+    uint64_t resv[4];
+    uint64_t host_triplet_len;
+    char host_triplet[]; // the triplet of the host this package is intended to run on.
 };
 
 // NOTE: Creates a new struct pkginfo and writes it to disk, if it is unpresent.

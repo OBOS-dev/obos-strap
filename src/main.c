@@ -13,8 +13,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <cjson/cJSON.h>
 
 #include "lock.h"
+#include "path.h"
 
 #if HAS_LIBCURL
 #   include <curl/curl.h>
@@ -23,17 +25,18 @@
 /*
  * build - DONE
  * clean - DONE
- * buildall - TODO
+ * buildall - DONE
  * rebuild - DONE
  * setup-env - DONE
  * force-unlock - DONE
  * install - DONE
- * installall - TODO
+ * installall - DONE
  * chroot - DONE
  * git repos - DONE
  */
 
 const char* prefix_directory = "./pkgs";
+const char* host_prefix_directory = "./host_pkgs";
 const char* bootstrap_directory = "./bootstrap";
 const char* repo_directory = "./repos";
 const char* recipes_directory = "./recipes";
@@ -79,6 +82,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n\
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
 ;
 
+struct config g_config;
+
 int main(int argc, char **argv)
 {
     argv[0] = basename(argv[0]);
@@ -87,6 +92,7 @@ int main(int argc, char **argv)
         printf("%s: %s", argv[0], help);
         return -1;
     }
+
 #if HAS_LIBCURL
     int curl_ec = 0;
     if ((curl_ec = curl_global_init(CURL_GLOBAL_DEFAULT)))
@@ -95,6 +101,7 @@ int main(int argc, char **argv)
         return -1;
     }
 #endif
+
     if (strcmp(argv[1], "setup-env") == 0)
     {
         printf("%s: Setting up enviornment\n", argv[0]);
@@ -115,6 +122,15 @@ int main(int argc, char **argv)
         if (stat(prefix_directory, &tmp) == -1)
         {
             if (mkdir(prefix_directory, st.st_mode | 0200) == -1)
+            {
+                perror("mkdir");
+                return -1;
+            }
+        }
+
+	if (stat(host_prefix_directory, &tmp) == -1)
+        {
+            if (mkdir(host_prefix_directory, st.st_mode | 0200) == -1)
             {
                 perror("mkdir");
                 return -1;
@@ -169,8 +185,13 @@ int main(int argc, char **argv)
         printf("%s", version);
         return 0;
     }
+
+    g_argc = argc;
+    g_argv = argv;
+
     pkg_info_directory = realpath(pkg_info_directory, NULL);
     prefix_directory = realpath(prefix_directory, NULL);
+    host_prefix_directory = realpath(host_prefix_directory, NULL);
     bootstrap_directory = realpath(bootstrap_directory, NULL);
     repo_directory = realpath(repo_directory, NULL);
     recipes_directory = realpath(recipes_directory, NULL);
@@ -179,13 +200,54 @@ int main(int argc, char **argv)
         printf("FATAL: Recipes directory does not exist.\n");
         return -1;
     }
-    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory)
+    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory)
     {
         printf("One or more required directories are missing. Did you forget to run %s setup-env after cleaning?\n", g_argv[0]);
         return -1;
     }
-    g_argc = argc;
-    g_argv = argv;
+
+    FILE* pkg_json = fopen("settings.json", "r");
+    if (!pkg_json)
+    {
+        perror("fopen");
+        return -1;
+    }
+
+    struct stat st = {};
+    fstat(fileno(pkg_json), &st);
+
+    char* json_data = malloc(st.st_size);
+    fread(json_data, st.st_size, st.st_size, pkg_json);
+
+    fclose(pkg_json);
+
+    cJSON* context = cJSON_Parse(json_data);
+    if (!context)
+    {
+        printf("%s: Parsing settings.json failed.\n", g_argv[0]);
+        free(json_data);
+        return -1;
+    }
+
+    cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
+    g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
+    g_config.host_triplet = OBOS_STRAP_HOST_TRIPLET;
+    if (g_config.cross_compiling)
+    {
+        child = cJSON_GetObjectItem(context, "target-triplet");
+        g_config.target_triplet = cJSON_GetStringValue(child);
+        if (g_config.target_triplet)
+            g_config.cross_compiling = strcmp(g_config.host_triplet, g_config.target_triplet) != 0;
+        else
+        {
+            printf("%s: cross-compiling is set to 1, but target-triplet is missing or invalid.\n", g_argv[0]);
+            abort();
+        }
+        // TODO: Verify the target triplet?
+    }
+    else
+        g_config.target_triplet = OBOS_STRAP_HOST_TRIPLET;
+
     if (strcmp(argv[1], "build") == 0)
     {
         if (argc < 3)
