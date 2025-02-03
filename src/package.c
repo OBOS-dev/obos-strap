@@ -233,7 +233,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             }
             else if (strncmp(subst_str, "target_triplet", subst_len) == 0)
             {
-                subst_str = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+                subst_str = g_config.target_triplet;
                 subst_len = strlen(subst_str);
             }
             else
