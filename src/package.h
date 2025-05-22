@@ -62,6 +62,7 @@ typedef struct package {
         } web;
     } source;
     enum {
+        SOURCE_TYPE_SOURCELESS,
         SOURCE_TYPE_GIT,
         SOURCE_TYPE_WEB,
     } source_type;

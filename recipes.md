@@ -5,12 +5,12 @@ Examples can be found under [tests/recipes](tests/recipes)
 - The name of the package.<br/>
 #### description: string (optional)
 - A light description of the package.<br/>
-#### git-url: string ((required if url is non-present)
+#### git-url: string
 - The URL of the git repo to clone<br/>
 #### git-commit: string (required if git-url is present)
 - The commit to checkout<br/>
-#### url: string (required if git-url is non-present)
-- A URL to an archive. This archive must be of format '.tar.*'.<br/>
+#### url: string
+- The URL to an archive. This archive must be of format '.tar.*'.<br/>
 #### depends: string array (required)
 - Dependencies of the project. These will be build before the requested package is built.<br/>
 #### patches: patch array (optional)

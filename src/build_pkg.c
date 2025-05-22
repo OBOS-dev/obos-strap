@@ -230,6 +230,9 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
             fetched = clone_repository(pkg->name, pkg->source.git.git_url, pkg->source.git.git_commit);
             break;
         }
+        case SOURCE_TYPE_SOURCELESS:
+            fetched = true;
+            break;
         default:
             printf("FATAL: Invalid source type: %d. this is a bug, report it.\n", pkg->source_type);
             unlock();

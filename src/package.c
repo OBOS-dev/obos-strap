@@ -444,13 +444,15 @@ package* get_package(const char* pkg_name)
         pkg->source_type = SOURCE_TYPE_WEB;
     }
     else
+        pkg->source_type = SOURCE_TYPE_SOURCELESS;
+/*  else
     {
         printf("%s: Could not determine package source for package '%s'\n", g_argv[0], pkg->name);
         free(json_data);
         free(pkg);
         cJSON_free(context);
         return NULL;
-    }
+    }*/
 
     get_patch_array(context, "patches", &pkg->patches);
 
