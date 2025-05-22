@@ -73,6 +73,7 @@ typedef struct package {
     command_array build_commands;
     command_array install_commands;
     command_array bootstrap_commands;
+    command_array run_commands;
 
     bool host_package;
 } package;

@@ -46,16 +46,17 @@ void clean();
 void build_pkg(const char* pkg);
 void rebuild_pkg(const char* pkg);
 void install_pkg(const char* pkg);
+void run_pkg(const char* pkg);
 void buildall();
 
 int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run\n";
 
 const char* version =
-"obos-strap v0.0.0\n"
+"obos-strap v0.0.1\n"
 "Copyright (c) 2024-2025 Omar Berrow\n\n"
 "From OpenBSD (sys/tree.h)\n"
 "Copyright 2002 Niels Provos <provos@citi.umich.edu>\n\
@@ -261,10 +262,19 @@ int main(int argc, char **argv)
     {
         if (argc < 3)
         {
-            printf("%s build pkg\n", argv[0]);
+            printf("%s install pkg\n", argv[0]);
             return -1;
         }
         install_pkg(argv[2]);
+    }
+    else if (strcmp(argv[1], "run") == 0)
+    {
+        if (argc < 3)
+        {
+            printf("%s run pkg\n", argv[0]);
+            return -1;
+        }
+        run_pkg(argv[2]);
     }
     else if (strcmp(argv[1], "build-all") == 0 || strcmp(argv[1], "install-all") == 0)
     {

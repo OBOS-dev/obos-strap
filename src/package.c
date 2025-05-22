@@ -503,6 +503,14 @@ package* get_package(const char* pkg_name)
         return NULL;
     }
 
+    if (get_command_array(context, "run-commands", &pkg->run_commands) != 0)
+        printf("Could not parse run-commands of package %s\n", pkg);
+    else
+    {
+        if (parse_command_array("run-commands", pkg, &pkg->run_commands) != 0)
+            printf("Could not parse run-commands of package %s\n", pkg);
+    }
+
     pkg->description = get_str_field(context, "description");
 
     return pkg;

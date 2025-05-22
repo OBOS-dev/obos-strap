@@ -456,6 +456,37 @@ void install_pkg(const char* name)
     unlock();
 }
 
+void run_pkg(const char* name)
+{
+    lock();
+    package* pkg = get_package(name);
+    if (!pkg)
+    {
+        printf("%s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], name);
+        unlock();
+        return;
+    }
+    struct pkginfo* info = read_package_info(name);
+    if (info->build_state < BUILD_STATE_INSTALLED)
+    {
+        curl_handle curl_hnd = init_curl();
+        if (!curl_hnd)
+        {
+            printf("curl_easy_init failed\n");
+            unlock();
+            return;
+        }
+        printf("Installing %s, '%s'.\n", pkg->name, pkg->description);
+        build_pkg_internal(pkg, curl_hnd, true, true);
+        cleanup_curl(curl_hnd);
+    }
+    free(info);
+    printf("Running %s, '%s'.\n", pkg->name, pkg->description);
+    for (size_t i = 0; i < pkg->run_commands.cnt; i++)
+        run_command(pkg->run_commands.buf[i].proc, pkg->run_commands.buf[i].argv);
+    unlock();
+}
+
 void rebuild_pkg(const char* name)
 {
     lock();

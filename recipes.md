@@ -33,6 +33,8 @@ Examples can be found under [tests/recipes](tests/recipes)
 - Commands run to build the package. These commands will be run under ${bootstrap_directory}/${name}/<br/>
 #### install-commands: array of string arrays (required)
 - Commands run to install the package into ${prefix_directory}. These commands will be run under ${bootstrap_directory}/${name}/<br/>
+#### run-commands: array of string arrays (optional)
+- Commands run when obos-strap run is executed on the package. These commands will be run in the directory obos-strap was run in.<br/>
 #### host-package: boolean (optional, defaults to false)
 - Whether this package is a host package or target package. Ignored if not cross compiling.
 ## Valid substitution strings in commands:
