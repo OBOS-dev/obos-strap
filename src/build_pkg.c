@@ -279,6 +279,12 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
         for (size_t i = 0; i < pkg->patches.cnt; i++)
         {
+            if (pkg->patches.buf[i].delete_file)
+            {
+                chdir(repo_directory);
+                remove(pkg->patches.buf[i].modifies);
+                chdir("..");
+            }
             if (!apply_patch(pkg->patches.buf[i].patch, pkg->patches.buf[i].modifies))
             {
                 free(info);

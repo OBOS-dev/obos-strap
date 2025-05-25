@@ -20,12 +20,14 @@ Examples can be found under [tests/recipes](tests/recipes)
 "patches": [
     {
         "modifies": "path/to/file",
-        "patch": "path/to/patch"
+        "patch": "path/to/patch",
+	"delete-file": 0,
     }
 ]
 ```
 - The "modifies" field is relative to ${repo_directory}
 - The "patch" field is relative to the directory obos-strap was run in.
+- The "delete-file" field specifies whether to delete $modifies before patching, can be either zero or one. Optional field. (default: 0)
 - Patches should be generated as if they were generated with `diff -u FILE1 FILE2`
 #### bootstrap-commands: array of string arrays (required)
 - Commands run to "bootstrap" the build. These commands will be run under ${bootstrap_directory}/${name}/<br/>

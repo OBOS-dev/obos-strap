@@ -37,6 +37,7 @@ void command_array_free(command_array* arr);
 typedef struct patch {
     const char* patch;
     const char* modifies;
+    bool delete_file;
 } patch;
 typedef struct patch_array {
     patch* buf;

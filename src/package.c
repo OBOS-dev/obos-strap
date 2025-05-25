@@ -353,6 +353,10 @@ int get_patch_array(cJSON* parent, const char* fieldname, patch_array* arr)
             printf("%s: Invalid array value in package JSON in field '%s', ignoring.\n", g_argv[0], fieldname);
             continue;
         }
+        do {
+            cJSON* child2 = cJSON_GetObjectItem(i, "delete-file");
+            ptch.delete_file = !child2 ? false : !!cJSON_GetNumberValue(child2);
+        } while (0);
         patch_array_append(arr, &ptch);
     }
     return 0;
@@ -504,11 +508,11 @@ package* get_package(const char* pkg_name)
     }
 
     if (get_command_array(context, "run-commands", &pkg->run_commands) != 0)
-        printf("Could not parse run-commands of package %s\n", pkg);
+        printf("Could not parse run-commands of package %s\n", pkg->name);
     else
     {
         if (parse_command_array("run-commands", pkg, &pkg->run_commands) != 0)
-            printf("Could not parse run-commands of package %s\n", pkg);
+            printf("Could not parse run-commands of package %s\n", pkg->name);
     }
 
     pkg->description = get_str_field(context, "description");
