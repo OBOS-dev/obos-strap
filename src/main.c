@@ -17,6 +17,7 @@
 
 #include "lock.h"
 #include "path.h"
+#include "update.h"
 
 #if HAS_LIBCURL
 #   include <curl/curl.h>
@@ -53,7 +54,7 @@ int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update\n";
 
 const char* version =
 "obos-strap v0.0.1\n"
@@ -267,6 +268,8 @@ int main(int argc, char **argv)
         }
         install_pkg(argv[2]);
     }
+    else if (strcmp(argv[1], "update") == 0)
+        update();
     else if (strcmp(argv[1], "run") == 0)
     {
         if (argc < 3)

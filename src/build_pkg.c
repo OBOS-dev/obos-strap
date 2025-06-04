@@ -159,9 +159,13 @@ static bool apply_patch(const char* patch_path, const char* modifies_path)
 void remove_recursively(const char* path);
 static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
 {
-    struct stat st = {};
-    if (stat(pkg_name, &st) == 0)
-        remove_recursively(pkg_name);
+    const char* dir_name = strrchr(url, '/')+1;
+    string_array argv_rm = {};
+    string_array_append(&argv_rm, "rm");
+    string_array_append(&argv_rm, "-rf");
+    string_array_append(&argv_rm, dir_name);
+    run_command("rm", argv_rm);
+    string_array_free(&argv_rm);
 
     // TODO: Use a library?
     string_array argv = {};
