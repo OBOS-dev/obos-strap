@@ -203,6 +203,11 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = pkg->name;
                 subst_len = strlen(pkg->name);
             }
+            else if (strncmp(subst_str, "description", subst_len) == 0)
+            {
+                subst_str = pkg->description;
+                subst_len = strlen(pkg->description);
+            }
             else if (strncmp(subst_str, "repo_directory", subst_len) == 0)
             {
                 subst_str = repo_directory;
