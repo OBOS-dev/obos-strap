@@ -113,7 +113,7 @@ int main(int argc, char **argv)
             printf("%s: Fatal: Could not find recipes directory.\n", argv[0]);
             return -1;
         }
-        if (!(st.st_mode & 0400) || !(st.st_mode & 0040) || !(st.st_mode & 0004))
+        if (!(st.st_mode & 0100) || !(st.st_mode & 0010) || !(st.st_mode & 0001))
         {
             printf("%s: Fatal: Found recipes directory, but it is unreadable.\n", argv[0]);
             return -1;
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
             }
         }
 
-	if (stat(host_prefix_directory, &tmp) == -1)
+        if (stat(host_prefix_directory, &tmp) == -1)
         {
             if (mkdir(host_prefix_directory, st.st_mode | 0200) == -1)
             {

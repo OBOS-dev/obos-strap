@@ -13,48 +13,48 @@
 #include <unistd.h>
 
 #include "path.h"
-
-#if _XOPEN_SOURCE >= 500
-static int remove_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
-{
-    if ((strcmp(fpath, "README") == 0) || (strcmp(fpath, pkg_info_directory) == 0))
-        return 0;
-    switch (typeflag) {
-        case FTW_D:
-            rmdir(fpath);
-            break;
-        default:
-            remove(fpath);
-            break;
-    }
-    return 0;
-}
-
-void remove_recursively(const char* path)
-{
-    nftw(path, remove_cb, 64, FTW_DEPTH | FTW_PHYS);
-}
-#else
-static int remove_cb(const char *fpath, const struct stat *sb, int typeflag)
-{
-    switch (typeflag) {
-        case FTW_D:
-            rmdir(fpath);
-            break;
-        default:
-            remove(fpath);
-            break;
-    }
-    return 0;
-}
+#include "package.h"
 
 static void remove_recursively(const char* path)
 {
-    ftw(path, remove_cb, 64);
+    string_array argv = {};
+    string_array_append(&argv, "rm");
+    string_array_append(&argv, "-rf");
+    string_array_append(&argv, path);
+    run_command("rm", &argv);
+    string_array_free(&argv);
 }
-#endif
 
 void clean()
 {
     remove_recursively(pkg_info_directory);
+    remove_recursively(bootstrap_directory);
+    remove_recursively(prefix_directory);
+    remove_recursively(host_prefix_directory);
+    remove_recursively(repo_directory);
+    if (mkdir(prefix_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return -1;
+    }
+    if (mkdir(host_prefix_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return -1;
+    }
+    if (mkdir(pkg_info_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return -1;
+    }
+    if (mkdir(repo_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return -1;
+    }
+    if (mkdir(bootstrap_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return -1;
+    }
 }
