@@ -1,0 +1,39 @@
+_foo() 
+{
+    local cur prev opts packages recipes
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update"
+
+    packages=""
+    recipes=`ls -c1 recipes/*`
+    for line in $recipes; do
+        unset PACKAGE
+        PACKAGE=$line
+        PACKAGE=${PACKAGE%%.json}
+        PACKAGE=${PACKAGE#recipes/}
+        packages="$packages $PACKAGE "
+    done
+
+    if [[ "${prev}" == "build" || "${prev}" == "install" || "${prev}" == "rebuild" || "${prev}" == "run" ]];
+    then
+        COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
+        return 0
+    elif [[ "${prev}" == "force-unlock" || "${prev}" == "setup-env" || "${prev}" == "update" || "${prev}" == "install-all" || "${prev}" == "build-all" ||
+            "${prev}" == "clean" ]] 
+    then
+        unset COMPREPLY
+        return 0
+    elif [[ "${prev}" == "chroot" ]]
+    then
+        compopt -o default
+        COMPREPLY=()
+        return 0
+    else
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+}
+
+complete -F _foo *obos-strap
