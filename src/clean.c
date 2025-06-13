@@ -15,13 +15,13 @@
 #include "path.h"
 #include "package.h"
 
-static void remove_recursively(const char* path)
+void remove_recursively(const char* path)
 {
     string_array argv = {};
     string_array_append(&argv, "rm");
     string_array_append(&argv, "-rf");
     string_array_append(&argv, path);
-    run_command("rm", &argv);
+    run_command("rm", argv);
     string_array_free(&argv);
 }
 
@@ -35,26 +35,26 @@ void clean()
     if (mkdir(prefix_directory, 0755) == -1)
     {
         perror("mkdir");
-        return -1;
+        return;
     }
     if (mkdir(host_prefix_directory, 0755) == -1)
     {
         perror("mkdir");
-        return -1;
+        return;
     }
     if (mkdir(pkg_info_directory, 0755) == -1)
     {
         perror("mkdir");
-        return -1;
+        return;
     }
     if (mkdir(repo_directory, 0755) == -1)
     {
         perror("mkdir");
-        return -1;
+        return;
     }
     if (mkdir(bootstrap_directory, 0755) == -1)
     {
         perror("mkdir");
-        return -1;
+        return;
     }
 }

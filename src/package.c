@@ -140,7 +140,7 @@ static int get_command_array(cJSON* parent, const char* fieldname, command_array
         }
         if (!cmd.argv.cnt)
         {
-            printf("%s: No command defined in package JSON in field '%s', ignoring command.\n", g_argv[0], fieldname);
+//          printf("%s: No command defined in package JSON in field '%s', ignoring command.\n", g_argv[0], fieldname);
             continue;
         }
         cmd.proc = string_array_at(&cmd.argv, 0);
@@ -283,7 +283,9 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
     }
     // Replace the entire substitution.
     *nSubstituted = act_len;
+#ifndef NDEBUG
     printf("DEBUG: Substituition of %.*s with %.*s\n", (int)act_len, dollar_sign, (int)subst_len, subst_str);
+#endif
     size_t new_len = arglen - act_len + subst_len;
     char* newarg = malloc(new_len+1);
     size_t front = dollar_sign - arg;
@@ -512,13 +514,8 @@ package* get_package(const char* pkg_name)
         return NULL;
     }
 
-    if (get_command_array(context, "run-commands", &pkg->run_commands) != 0)
-        printf("Could not parse run-commands of package %s\n", pkg->name);
-    else
-    {
-        if (parse_command_array("run-commands", pkg, &pkg->run_commands) != 0)
-            printf("Could not parse run-commands of package %s\n", pkg->name);
-    }
+    if (get_command_array(context, "run-commands", &pkg->run_commands) == 0)
+        parse_command_array("run-commands", pkg, &pkg->run_commands);
 
     pkg->description = get_str_field(context, "description");
 

@@ -178,7 +178,9 @@ static bool clone_repository(const char* pkg_name, const char* url, const char* 
     if (ret != EXIT_SUCCESS)
     {
         printf("Git failed with exit code %d\n", ret);
+#ifndef NDEBUG
         printf("Leaving directory %s\n", pkg_name);
+#endif
         if (chdir("..") == -1)
         {
             perror("chdir");
@@ -205,7 +207,9 @@ static bool clone_repository(const char *pkg_name, const char* url, const char* 
 static bool fetch(package* pkg, curl_handle curl_hnd)
 {
     // Fetch the repository/archive.
+#ifndef NDEBUG
     printf("Entering directory %s\n", repo_directory);
+#endif
     if (chdir(repo_directory) == -1)
     {
         perror("chdir");
@@ -244,7 +248,9 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
     }
 
     done_fetch:
+#ifndef NDEBUG
     printf("Leaving directory %s\n", repo_directory);
+#endif
     if (chdir("..") == -1)
     {
         perror("chdir");
@@ -260,15 +266,23 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     for (size_t i = 0; i < pkg->depends.cnt && satisfy_dependencies; i++)
     {
         const char* depend = pkg->depends.buf[i];
-        printf("Looking for dependency %s\n", depend);
+//      printf("Looking for dependency %s\n", depend);
         package* depend_pkg = get_package(depend);
         if (!depend_pkg)
         {
             printf("%s: While satisfying dependencies for package %s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], pkg->name, depend);
             return false;
         }
-        printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
         // TODO: Make non-recursive?
+        struct pkginfo* info = read_package_info(pkg->name);
+        if (info->build_state == (BUILD_STATE_BUILT+install))
+            printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
+        else
+        {
+            free(info);
+            continue;
+        }
+        free(info);
         if (!build_pkg_internal(depend_pkg, curl_hnd, install, satisfy_dependencies))
             return false;
     }
@@ -299,7 +313,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         write_package_info(pkg->name, info);
     }
 
+#ifndef NDEBUG
     printf("Entering directory %s\n", bootstrap_directory);
+#endif
     if (chdir(bootstrap_directory) == -1)
     {
         perror("chdir");
@@ -311,7 +327,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (stat(pkg->name, &st) == -1)
         mkdir(pkg->name, 0777);
     int dir_fd = open(pkg->name, O_DIRECTORY);
-    printf("Entering directory %s\n", pkg->name);
+#ifndef NDEBUG
+   printf("Entering directory %s\n", pkg->name);
+#endif
     if (fchdir(dir_fd) == -1)
     {
         perror("chdir");
@@ -330,7 +348,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             {
                 printf("%s exited with code %d\n", cmd->proc, ec);
                 free(info);
+#ifndef NDEBUG
                 printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+#endif
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
@@ -366,7 +386,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             {
                 printf("%s exited with code %d\n", cmd->proc, ec);
                 free(info);
+#ifndef NDEBUG
                 printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+#endif
                 if (chdir("../../") == -1)
                 {
                     perror("chdir");
@@ -392,7 +414,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             {
                 printf("%s exited with code %d\n", cmd->proc, ec);
                 free(info);
+#ifndef NDEBUG
                 printf("Leaving directory %s\n", bootstrap_directory);
+#endif
                 if (chdir("..") == -1)
                 {
                     perror("chdir");
@@ -407,7 +431,9 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         write_package_info(pkg->name, info);
     }
 
+#ifndef NDEBUG
     printf("Leaving directory %s\n", bootstrap_directory);
+#endif
     if (chdir("..") == -1)
     {
         perror("chdir");
