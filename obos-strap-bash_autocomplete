@@ -36,4 +36,4 @@ _foo()
     fi
 }
 
-complete -F _foo *obos-strap
+complete -F _foo obos-strap
