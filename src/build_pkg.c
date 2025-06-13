@@ -275,7 +275,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
         // TODO: Make non-recursive?
         struct pkginfo* info = read_package_info(pkg->name);
-        if (info->build_state == (BUILD_STATE_BUILT+install))
+        if (info->build_state < (BUILD_STATE_BUILT+install))
             printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
         else
         {
