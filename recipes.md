@@ -39,6 +39,8 @@ Examples can be found under [tests/recipes](tests/recipes)
 - Commands run when obos-strap run is executed on the package. These commands will be run in the directory obos-strap was run in.<br/>
 #### host-package: boolean (optional, defaults to false)
 - Whether this package is a host package or target package. Ignored if not cross compiling.
+#### host-provides: string (optional, defaults to nothing)
+- The name of an executable that this host package provides, to avoid rebuild compilers, and such.
 ## Valid substitution strings in commands:
 ```
 bootstrap_directory: Output of bootstrap commands goes here, as well as built binaries

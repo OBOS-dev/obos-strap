@@ -90,10 +90,37 @@ void patch_array_free(patch_array* arr)
     free(arr->buf);
 }
 
+static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** const arg_, size_t* const arglen_, size_t *nSubstituted, package* pkg);
+
 static const char* get_str_field(cJSON* parent, const char* fieldname)
 {
     cJSON* child = cJSON_GetObjectItem(parent, fieldname);
     return cJSON_GetStringValue(child);
+}
+static const char* get_str_field_subst(cJSON* parent, const char* fieldname, package* pkg)
+{
+    const char* field = get_str_field(parent, fieldname);
+    if (!field)
+        return NULL;
+    size_t len = strlen(field);
+    char* arg = memcpy(malloc(len+1), field, len);
+    arg[len] = 0;
+    char* iter = arg;
+    do {
+        char* dollar_sign = strchr(iter, '$');
+        if (!dollar_sign)
+            break;
+        if ((dollar_sign + 1) >= (arg+len))
+            break;
+
+        size_t nSubstituted = 0;
+        int ec = parse_dollar_sign(dollar_sign, fieldname, &arg, &len, &nSubstituted, pkg);
+        if (ec != 0)
+            return NULL;
+        iter = dollar_sign + nSubstituted;
+    } while(1);
+
+    return arg;
 }
 
 static int get_str_array_field(cJSON* parent, const char* fieldname, string_array* arr)
@@ -516,6 +543,9 @@ package* get_package(const char* pkg_name)
 
     if (get_command_array(context, "run-commands", &pkg->run_commands) == 0)
         parse_command_array("run-commands", pkg, &pkg->run_commands);
+
+    if (pkg->host_package)
+        pkg->host_provides = get_str_field_subst(context, "host-provides", pkg);
 
     pkg->description = get_str_field(context, "description");
 

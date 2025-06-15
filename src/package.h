@@ -53,6 +53,8 @@ typedef struct package {
     const char *name;
     const char* description;
 
+    const char* host_provides;
+
     union {
         struct {
             const char* git_commit;

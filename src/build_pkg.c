@@ -262,6 +262,32 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
 
 bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies)
 {
+    if (pkg->host_package && pkg->host_provides)
+    {
+        // Hopefully this doesn't hang.
+        string_array argv = {};
+        string_array_append(&argv, pkg->host_provides);
+        string_array_append(&argv, "-v");
+        int ec = run_command(pkg->host_provides, argv);
+        if (!ec)
+        {
+            // It exists.
+            printf("%s provided by host package %s is already installed from an external source. Assuming it works...\n", pkg->host_provides, pkg->name);
+            struct pkginfo* info = read_package_info(pkg->name);
+            info->build_state = BUILD_STATE_INSTALLED;
+
+            const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+            info->host_triplet_len = strlen(triplet);
+            info = realloc(info, sizeof(*info) + info->host_triplet_len);
+            assert(info);
+            memcpy(info->host_triplet, triplet, info->host_triplet_len);
+            info->cross_compiled = g_config.cross_compiling;
+
+            write_package_info(pkg->name, info);
+            return true;
+        }
+    }
+
     // Satisfy dependencies.
     for (size_t i = 0; i < pkg->depends.cnt && satisfy_dependencies; i++)
     {
