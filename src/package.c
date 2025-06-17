@@ -4,6 +4,7 @@
  * Copyright (c) 2024 Omar Berrow
  */
 
+#include <signal.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -72,14 +73,50 @@ void command_array_free(command_array* arr)
 
 int command_array_run(command_array* arr, command** ocmd)
 {
+    // for (size_t i = 0; i < arr->cnt; i++)
+    // {
+    //     command* cmd = &arr->buf[i];
+    //     if (ocmd) *ocmd = cmd;
+    //     int ec = run_command(cmd->proc, cmd->argv);
+    //     if (ec != EXIT_SUCCESS)
+    //         return ec;
+    // }
+    char* cmds_str = NULL;
+    size_t cmds_str_size = 0;
     for (size_t i = 0; i < arr->cnt; i++)
     {
+        char* cmd_str = NULL;
+        size_t cmd_str_size = 0;
         command* cmd = &arr->buf[i];
-        if (ocmd) *ocmd = cmd;
-        int ec = run_command(cmd->proc, cmd->argv);
-        if (ec != EXIT_SUCCESS)
-            return ec;
+        for (size_t arg = 0; arg < cmd->argv.cnt; arg++)
+            cmd_str_size += strlen(cmd->argv.buf[arg]) + 3;
+        cmd_str = malloc(cmd_str_size + 1);
+        cmd_str[0] = 0;
+        cmd_str[cmd_str_size] = 0;
+        for (size_t arg = 0; arg < cmd->argv.cnt; arg++)
+        {
+            strcat(cmd_str, "\"");
+            strcat(cmd_str, cmd->argv.buf[arg]);
+            if (arg != cmd->argv.cnt-1)
+                strcat(cmd_str, "\" ");
+            else
+                strcat(cmd_str, "\"");
+        }
+        cmds_str_size += cmd_str_size+1;
+        cmds_str = realloc(cmds_str, cmds_str_size+1);
+        cmds_str[cmds_str_size] = 0;
+        if (cmds_str_size == (cmd_str_size+1))
+            cmds_str[0] = 0;
+        strcat(cmds_str, cmd_str);
+        strcat(cmds_str, ";");
+        free(cmd_str);
     }
+    string_array argv = {};
+    string_array_append(&argv, "bash");
+    string_array_append(&argv, "-c");
+    string_array_append(&argv, cmds_str);
+    run_command("bash", argv);
+    free(cmds_str);
     return 0;
 }
 
