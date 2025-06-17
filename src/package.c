@@ -243,7 +243,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
         {
             // Escape the dollar sign.
             subst_str = "$";
-            subst_len = 1;
+            subst_len = 2;
             subst_free = false;
             act_len = 2;
             break;
