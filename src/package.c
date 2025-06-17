@@ -73,6 +73,8 @@ void command_array_free(command_array* arr)
 
 int command_array_run(command_array* arr, command** ocmd)
 {
+    if (!arr->cnt)
+        return 0;
     // for (size_t i = 0; i < arr->cnt; i++)
     // {
     //     command* cmd = &arr->buf[i];
@@ -115,9 +117,11 @@ int command_array_run(command_array* arr, command** ocmd)
     string_array_append(&argv, "bash");
     string_array_append(&argv, "-c");
     string_array_append(&argv, cmds_str);
-    run_command("bash", argv);
+    int ec = run_command("bash", argv);
     free(cmds_str);
-    return 0;
+    if (ocmd)
+        *ocmd = &arr->buf[0];
+    return ec;
 }
 
 void patch_array_append(patch_array* arr, patch* ptch)

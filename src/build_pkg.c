@@ -428,7 +428,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     {
         // Run install commands.
         command* cmd = NULL;
-        int ec = command_array_run(&pkg->build_commands, &cmd);
+        int ec = command_array_run(&pkg->install_commands, &cmd);
         if (ec != EXIT_SUCCESS && cmd)
         {
             printf("%s exited with code %d\n", cmd->proc, ec);
