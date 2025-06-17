@@ -33,6 +33,7 @@ typedef struct command_array {
 void command_array_append(command_array* arr, command* cmd);
 command* command_array_at(command_array* arr, size_t idx);
 void command_array_free(command_array* arr);
+int command_array_run(command_array* arr, command** cmd);
 
 typedef struct patch {
     const char* patch;

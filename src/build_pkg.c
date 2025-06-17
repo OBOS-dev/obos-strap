@@ -366,25 +366,22 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (info->build_state < BUILD_STATE_CONFIGURED)
     {
         // Run bootstrap commands.
-        for (size_t i = 0; i < pkg->bootstrap_commands.cnt; i++)
+        command* cmd = NULL;
+        int ec = command_array_run(&pkg->bootstrap_commands, &cmd);
+        if (ec != EXIT_SUCCESS && cmd)
         {
-            command* cmd = &pkg->bootstrap_commands.buf[i];
-            int ec = run_command(cmd->proc, cmd->argv);
-            if (ec != EXIT_SUCCESS)
-            {
-                printf("%s exited with code %d\n", cmd->proc, ec);
-                free(info);
+            printf("%s exited with code %d\n", cmd->proc, ec);
+            free(info);
 #ifndef NDEBUG
-                printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+            printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
 #endif
-                if (chdir("../../") == -1)
-                {
-                    perror("chdir");
-                    return false;
-                }
-
+            if (chdir("../../") == -1)
+            {
+                perror("chdir");
                 return false;
             }
+
+            return false;
         }
 
         info->build_state = BUILD_STATE_CONFIGURED;
@@ -404,26 +401,24 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (info->build_state < BUILD_STATE_BUILT)
     {
         // Run build commands.
-        for (size_t i = 0; i < pkg->build_commands.cnt; i++)
+        command* cmd = NULL;
+        int ec = command_array_run(&pkg->build_commands, &cmd);
+        if (ec != EXIT_SUCCESS && cmd)
         {
-            command* cmd = &pkg->build_commands.buf[i];
-            int ec = run_command(cmd->proc, cmd->argv);
-            if (ec != EXIT_SUCCESS)
-            {
-                printf("%s exited with code %d\n", cmd->proc, ec);
-                free(info);
+            printf("%s exited with code %d\n", cmd->proc, ec);
+            free(info);
 #ifndef NDEBUG
-                printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
+            printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
 #endif
-                if (chdir("../../") == -1)
-                {
-                    perror("chdir");
-                    return false;
-                }
-
+            if (chdir("../../") == -1)
+            {
+                perror("chdir");
                 return false;
             }
+
+            return false;
         }
+
         info->build_state = BUILD_STATE_BUILT;
         gettimeofday(&info->configure_date, NULL);
         write_package_info(pkg->name, info);
@@ -432,26 +427,24 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (info->build_state < BUILD_STATE_INSTALLED && install)
     {
         // Run install commands.
-        for (size_t i = 0; i < pkg->install_commands.cnt; i++)
+        command* cmd = NULL;
+        int ec = command_array_run(&pkg->build_commands, &cmd);
+        if (ec != EXIT_SUCCESS && cmd)
         {
-            command* cmd = &pkg->install_commands.buf[i];
-            int ec = run_command(cmd->proc, cmd->argv);
-            if (ec != EXIT_SUCCESS)
-            {
-                printf("%s exited with code %d\n", cmd->proc, ec);
-                free(info);
+            printf("%s exited with code %d\n", cmd->proc, ec);
+            free(info);
 #ifndef NDEBUG
-                printf("Leaving directory %s\n", bootstrap_directory);
+            printf("Leaving directory %s/%s\n", bootstrap_directory, pkg->name);
 #endif
-                if (chdir("..") == -1)
-                {
-                    perror("chdir");
-                    return false;
-                }
-
+            if (chdir("../../") == -1)
+            {
+                perror("chdir");
                 return false;
             }
+
+            return false;
         }
+
         info->build_state = BUILD_STATE_INSTALLED;
         gettimeofday(&info->configure_date, NULL);
         write_package_info(pkg->name, info);

@@ -70,6 +70,19 @@ void command_array_free(command_array* arr)
     free(arr->buf);
 }
 
+int command_array_run(command_array* arr, command** ocmd)
+{
+    for (size_t i = 0; i < arr->cnt; i++)
+    {
+        command* cmd = &arr->buf[i];
+        if (ocmd) *ocmd = cmd;
+        int ec = run_command(cmd->proc, cmd->argv);
+        if (ec != EXIT_SUCCESS)
+            return ec;
+    }
+    return 0;
+}
+
 void patch_array_append(patch_array* arr, patch* ptch)
 {
     arr->buf = realloc(arr->buf, (arr->cnt+1)*sizeof(patch));
