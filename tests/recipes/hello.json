@@ -1,7 +1,7 @@
 {
     "name": "hello",
     "description": "Print a friendly, customizable greeting.",
-    "url": "https://ftp.gnu.org/gnu/hello/hello-2.12.1.tar.gz",
+    "url": "https://mirror.csclub.uwaterloo.ca/gnu/hello/hello-2.12.1.tar.gz",
     "depends": [ "bash" ],
     "patches": [],
     "bootstrap-commands": [

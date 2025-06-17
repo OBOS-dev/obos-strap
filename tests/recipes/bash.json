@@ -1,7 +1,7 @@
 {
     "name": "bash",
     "description": "Bourne Again SHell",
-    "url": "https://ftp.gnu.org/gnu/bash/bash-5.2.37.tar.gz",
+    "url": "https://mirror.csclub.uwaterloo.ca/gnu/bash/bash-5.2.37.tar.gz",
     "depends": [],
     "patches": [],
     "bootstrap-commands": [
