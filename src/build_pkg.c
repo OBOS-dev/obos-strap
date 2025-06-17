@@ -537,8 +537,7 @@ void run_pkg(const char* name)
     }
     free(info);
     printf("Running %s, '%s'.\n", pkg->name, pkg->description);
-    for (size_t i = 0; i < pkg->run_commands.cnt; i++)
-        run_command(pkg->run_commands.buf[i].proc, pkg->run_commands.buf[i].argv);
+    command_array_run(&pkg->run_commands, NULL);
     unlock();
 }
 
