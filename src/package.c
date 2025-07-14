@@ -97,12 +97,19 @@ int command_array_run(command_array* arr, command** ocmd)
         cmd_str[cmd_str_size] = 0;
         for (size_t arg = 0; arg < cmd->argv.cnt; arg++)
         {
-            strcat(cmd_str, "\"");
-            strcat(cmd_str, cmd->argv.buf[arg]);
-            if (arg != cmd->argv.cnt-1)
-                strcat(cmd_str, "\" ");
-            else
+            bool has_asterisk = strchr(cmd->argv.buf[arg], '*') != NULL;
+            if (!has_asterisk)
                 strcat(cmd_str, "\"");
+            strcat(cmd_str, cmd->argv.buf[arg]); // just hope this works ;)
+            if (!has_asterisk)
+            {
+                if (arg != cmd->argv.cnt-1)
+                    strcat(cmd_str, "\" ");
+                else
+                    strcat(cmd_str, "\"");
+            }
+            else if (arg != cmd->argv.cnt-1)
+                strcat(cmd_str, " ");
         }
         cmds_str_size += cmd_str_size+1;
         cmds_str = realloc(cmds_str, cmds_str_size+1);
@@ -247,7 +254,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
         {
             // Escape the dollar sign.
             subst_str = "$";
-            subst_len = 2;
+            subst_len = 1;
             subst_free = false;
             act_len = 2;
             break;
@@ -374,7 +381,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
     memcpy(newarg + front, subst_str, subst_len);
     memcpy(newarg + front + subst_len, arg+front+act_len, new_len-(front+subst_len));
     newarg[new_len] = 0;
-    *nSubstituted = subst_len;
+    *nSubstituted = subst_len + (*act == '$');
     *arg_ = newarg;
     *arglen_ = new_len;
     if (subst_free)
