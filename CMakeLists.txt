@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.10)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/")
 
 option (OBOS_STRAP_ENABLE_GIT "Add git repository support for sources." ON)
+option (OBOS_STRAP_MLIBC "Whether mlibc is the target libc" OFF)
 
 project (
     obos-strap
@@ -35,6 +36,8 @@ if (${OBOS_STRAP_ENABLE_GIT})
 else()
     add_compile_definitions(ENABLE_GIT=0)
 endif()
+
+add_compile_definitions(OBOS_STRAP_MLIBC=${OBOS_STRAP_MLIBC})
 
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE OBOS_STRAP_HOST_TRIPLET)
 string(STRIP "${OBOS_STRAP_HOST_TRIPLET}" OBOS_STRAP_HOST_TRIPLET)

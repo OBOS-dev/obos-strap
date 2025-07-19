@@ -47,6 +47,7 @@ void unlock_sig(int signum)
 void lock()
 {
     // printf("%s: Acquiring lock\n", g_argv[0]);
+#if !OBOS_STRAP_MLIBC
     current_lock = sem_open(current_lock_name, O_CREAT, 0666, 1);
     if (!current_lock)
     {
@@ -55,6 +56,8 @@ void lock()
     }
     sem_wait(current_lock);
     atexit(unlock);
+    return;
+#endif
     signal(SIGINT, unlock_sig);
     signal(SIGSEGV, unlock_sig);
     signal(SIGFPE, unlock_sig);
@@ -63,6 +66,9 @@ void lock()
 
 void unlock()
 {
+#if OBOS_STRAP_MLIBC
+    return;
+#endif
     if (!current_lock) return;
     sem_post(current_lock);
     sem_close(current_lock);
