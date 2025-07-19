@@ -353,11 +353,10 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         remove_recursively(pkg->name);
     mkdir(pkg->name, 0777);
 
-    int dir_fd = open(pkg->name, O_DIRECTORY);
 #ifndef NDEBUG
    printf("Entering directory %s\n", pkg->name);
 #endif
-    if (fchdir(dir_fd) == -1)
+    if (chdir(pkg->name) == -1)
     {
         perror("chdir");
         free(info);
