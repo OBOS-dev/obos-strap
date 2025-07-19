@@ -25,3 +25,5 @@ if (HAS_LIBGIT2)
     target_include_directories(obos-strap PRIVATE "${LIBGIT2_INCLUDE_DIRS}")
     target_link_libraries(obos-strap PRIVATE "${LIBGIT2_LINK_LIBRARIES}")
 endif()
+
+install (TARGETS obos-strap)
