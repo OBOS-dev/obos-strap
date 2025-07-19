@@ -17,7 +17,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/sysinfo.h>
 #include <errno.h>
 #include <ctype.h>
 
@@ -319,7 +318,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             else if (strncmp(subst_str, "nproc", subst_len) == 0)
             {
                 subst_free = true;
-                int nproc = get_nprocs();
+                int nproc = sysconf(_SC_NPROCESSORS_ONLN);
                 subst_len = snprintf(NULL, 0, "%d", nproc);
                 subst_str = malloc(subst_len+1);
                 snprintf((char*)subst_str, subst_len+1, "%d", nproc);

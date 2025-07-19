@@ -10,11 +10,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
-#include <sys/sysinfo.h>
 #include <pthread.h>
 #include <string.h>
 #include <dirent.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 #include "package.h"
 #include "tree.h"
@@ -244,7 +244,7 @@ void buildall()
         return;
     }
 
-    int nproc = get_nprocs();
+    int nproc = sysconf(_SC_NPROCESSORS_ONLN);
     sem_init(&awake_threads, 0, nproc);
     sem_wait(&awake_threads);
     for (package_node* node = packages_zero_dependencies.head; node; )

@@ -88,18 +88,18 @@ static bool extract_archive(const char* url, const char* name, char* archive_pat
 #define init_curl() (-1)
 #define cleanup_curl(c) (void)(c)
 typedef int curl_handle;
-static bool download_archive(curl_handle hnd, const char* url, const char* destdir)
+static char* download_archive(curl_handle hnd, const char* url)
 {
     (void)(hnd);
-    (void)(destdir);
     printf("Could not download archive %s. You must build obos-strap with libcurl installed.\n", url);
-    return false;
+    return NULL;
 }
 static bool extract_archive(const char* url, const char* name, char* archive_path)
 {
     (void)(url);
     (void)(name);
     (void)(archive_path);
+    return false;
 }
 #endif
 
@@ -155,8 +155,8 @@ static bool apply_patch(const char* patch_path, const char* modifies_path)
     return res;
 }
 
-#if ENABLE_GIT
 void remove_recursively(const char* path);
+#if ENABLE_GIT
 static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
 {
     const char* dir_name = strrchr(url, '/')+1;
@@ -349,9 +349,10 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         return false;
     }
 
-    struct stat st = {};
-    if (stat(pkg->name, &st) == -1)
-        mkdir(pkg->name, 0777);
+    if (info->build_state < BUILD_STATE_CONFIGURED)
+        remove_recursively(pkg->name);
+    mkdir(pkg->name, 0777);
+
     int dir_fd = open(pkg->name, O_DIRECTORY);
 #ifndef NDEBUG
    printf("Entering directory %s\n", pkg->name);
