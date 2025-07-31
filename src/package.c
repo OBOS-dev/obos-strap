@@ -172,11 +172,14 @@ static const char* get_str_field_subst(cJSON* parent, const char* fieldname, pac
             break;
         if ((dollar_sign + 1) >= (arg+len))
             break;
+        size_t dollar_sign_offset = dollar_sign-arg;
 
         size_t nSubstituted = 0;
         int ec = parse_dollar_sign(dollar_sign, fieldname, &arg, &len, &nSubstituted, pkg);
         if (ec != 0)
             return NULL;
+        iter = arg + dollar_sign_offset;
+        dollar_sign = iter;
         iter = dollar_sign + nSubstituted;
     } while(1);
 
@@ -405,11 +408,14 @@ static int parse_command_array(const char* fieldname, package* pkg, command_arra
                     break;
                 if ((dollar_sign + 1) >= (arg+arglen))
                     break;
+                size_t dollar_sign_offset = dollar_sign-arg;
 
                 size_t nSubstituted = 0;
                 int ec = parse_dollar_sign(dollar_sign, fieldname, &arg, &arglen, &nSubstituted, pkg);
                 if (ec != 0)
                     return ec;
+                iter = arg + dollar_sign_offset;
+                dollar_sign = iter;
                 iter = dollar_sign + nSubstituted;
             } while(1);
             arr->buf[i].argv.buf[j] = arg;
