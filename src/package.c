@@ -1,10 +1,9 @@
 /*
  * src/package.c
  *
- * Copyright (c) 2024 Omar Berrow
+ * Copyright (c) 2024-2025 Omar Berrow
  */
 
-#include <signal.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -331,12 +330,17 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = g_config.target_triplet;
                 subst_len = strlen(subst_str);
             }
+            else if (strncmp(subst_str, "bin_package_prefix", subst_len) == 0)
+            {
+                subst_str = package_make_bin_prefix(pkg);
+                subst_len = strlen(pkg->bin_package_prefix);
+                pkg->supports_binary_packages = true;
+            }
             else
             {
                 printf("%s: In field '%s': Invalid substitution key '%s', aborting.\n", g_argv[0], fieldname, dollar_sign);
                 return -1;
             }
-
 
             break;
         }
@@ -460,6 +464,21 @@ int get_patch_array(cJSON* parent, const char* fieldname, patch_array* arr)
         patch_array_append(arr, &ptch);
     }
     return 0;
+}
+
+char* package_make_bin_prefix(package* pkg)
+{
+    if (pkg->bin_package_prefix)
+        return pkg->bin_package_prefix;
+    char* buf = NULL;
+    size_t len = 0;
+
+    len = snprintf(NULL, 0, "%s/%s/obos-strap-bin/", bootstrap_directory, pkg->name);
+    buf = malloc(len+1);
+    snprintf(buf, len+1, "%s/%s/obos-strap-bin/", bootstrap_directory, pkg->name);
+    pkg->bin_package_prefix = buf;
+
+    return buf;
 }
 
 package* get_package(const char* pkg_name)

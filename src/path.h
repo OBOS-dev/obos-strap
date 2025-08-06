@@ -12,6 +12,8 @@
 extern const char* prefix_directory;
 // Final install directory for host packages.
 extern const char* host_prefix_directory;
+// Binary packages go here.
+extern const char* binary_package_directory;
 // Output of bootstrap commands goes here, as well as built binaries
 extern const char* bootstrap_directory;
 // Repositories are cloned here.

@@ -56,6 +56,8 @@ typedef struct package {
 
     const char* host_provides;
 
+    char* bin_package_prefix;
+
     union {
         struct {
             const char* git_commit;
@@ -79,8 +81,10 @@ typedef struct package {
     command_array bootstrap_commands;
     command_array run_commands;
 
-    bool host_package;
+    bool host_package : 1;
+    bool supports_binary_packages : 1;
 } package;
+char* package_make_bin_prefix(package* pkg);
 
 package* get_package(const char* pkg_name);
 

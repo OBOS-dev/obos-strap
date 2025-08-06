@@ -40,7 +40,7 @@ Examples can be found under [tests/recipes](tests/recipes)
 #### host-package: boolean (optional, defaults to false)
 - Whether this package is a host package or target package. Ignored if not cross compiling.
 #### host-provides: string (optional, defaults to nothing)
-- The name of an executable that this host package provides, to avoid rebuild compilers, and such.
+- The name of an executable that this host package provides, to avoid rebuilding compilers, or other packages that are only needed once.
 ## Valid substitution strings in commands:
 ```
 bootstrap_directory: Output of bootstrap commands goes here, as well as built binaries
@@ -52,6 +52,7 @@ bootstrap_directory: Output of bootstrap commands goes here, as well as built bi
       target_prefix: The target prefix directory.
               nproc: The CPU count of the system.
      target_triplet: The target triplet.
+ bin_package_prefix: The directory in which files should be installed for binary packages
 ```
 - To access these, do ${insert_name_here}
 - To access an environment variable, do $ENV

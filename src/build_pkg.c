@@ -352,7 +352,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     if (info->build_state < BUILD_STATE_CONFIGURED)
         remove_recursively(pkg->name);
     mkdir(pkg->name, 0777);
-
+    mkdir(package_make_bin_prefix(pkg), 0777);
+    
 #ifndef NDEBUG
    printf("Entering directory %s\n", pkg->name);
 #endif

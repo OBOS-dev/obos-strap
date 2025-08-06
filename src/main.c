@@ -38,6 +38,7 @@
 
 const char* prefix_directory = "./pkgs";
 const char* host_prefix_directory = "./host_pkgs";
+const char* binary_package_directory = "./bin_pkgs/";
 const char* bootstrap_directory = "./bootstrap";
 const char* repo_directory = "./repos";
 const char* recipes_directory = "./recipes";
@@ -47,6 +48,7 @@ void clean();
 void build_pkg(const char* pkg);
 void rebuild_pkg(const char* pkg);
 void install_pkg(const char* pkg);
+void build_binary_package(const char* name);
 void run_pkg(const char* pkg);
 void buildall();
 
@@ -54,7 +56,7 @@ int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update, install-bin-pkg\n";
 
 const char* version =
 "obos-strap v0.0.1\n"
@@ -138,6 +140,14 @@ int main(int argc, char **argv)
                 return -1;
             }
         }
+        if (stat(binary_package_directory, &tmp) == -1)
+        {
+            if (mkdir(binary_package_directory, st.st_mode | 0200) == -1)
+            {
+                perror("mkdir");
+                return -1;
+            }
+        }
 
         if (stat(pkg_info_directory, &tmp) == -1)
         {
@@ -194,6 +204,7 @@ int main(int argc, char **argv)
     pkg_info_directory = realpath(pkg_info_directory, NULL);
     prefix_directory = realpath(prefix_directory, NULL);
     host_prefix_directory = realpath(host_prefix_directory, NULL);
+    binary_package_directory = realpath(binary_package_directory, NULL);
     bootstrap_directory = realpath(bootstrap_directory, NULL);
     repo_directory = realpath(repo_directory, NULL);
     recipes_directory = realpath(recipes_directory, NULL);
@@ -202,7 +213,7 @@ int main(int argc, char **argv)
         printf("FATAL: Recipes directory does not exist.\n");
         return -1;
     }
-    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory)
+    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory || !binary_package_directory)
     {
         printf("One or more required directories are missing. Did you forget to run %s setup-env after cleaning?\n", g_argv[0]);
         return -1;
@@ -267,6 +278,15 @@ int main(int argc, char **argv)
             return -1;
         }
         install_pkg(argv[2]);
+    }
+    else if (strcmp(argv[1], "install-bin-pkg") == 0)
+    {
+        if (argc < 3)
+        {
+            printf("%s install-bin-pkg pkg\n", argv[0]);
+            return -1;
+        }
+        build_binary_package(argv[2]);
     }
     else if (strcmp(argv[1], "update") == 0)
         update();

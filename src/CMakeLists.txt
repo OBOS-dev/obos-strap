@@ -5,6 +5,7 @@
 add_executable(obos-strap
     "main.c" "clean.c" "build_pkg.c" "package.c"
     "lock.c" "cmd.c" "buildall.c" "update.c"
+    "build_bin_pkg.c"
 )
 
 target_compile_definitions(obos-strap PRIVATE OBOS_STRAP_HOST_TRIPLET=\"${OBOS_STRAP_HOST_TRIPLET}\")
