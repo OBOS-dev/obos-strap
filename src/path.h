@@ -29,5 +29,6 @@ extern char** g_argv;
 extern struct config {
 	const char* target_triplet;
 	bool cross_compiling;
+	bool binary_packages_default;
 	const char* host_triplet;
 } g_config;

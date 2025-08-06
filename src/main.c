@@ -242,8 +242,10 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
+    cJSON*  child = cJSON_GetObjectItem(context, "cross-compile");
     g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
+    child = cJSON_GetObjectItem(context, "binary-packages-default");
+    g_config.binary_packages_default = child ? !!cJSON_GetNumberValue(child) : false;
     g_config.host_triplet = OBOS_STRAP_HOST_TRIPLET;
     if (g_config.cross_compiling)
     {
@@ -274,10 +276,16 @@ int main(int argc, char **argv)
     {
         if (argc < 3)
         {
-            printf("%s install pkg\n", argv[0]);
+            printf("%s install pkg [build binary package:0/1]\n", argv[0]);
             return -1;
         }
-        install_pkg(argv[2]);
+        bool should_build_binary_package = g_config.binary_packages_default;
+        if (argc >= 4)
+            should_build_binary_package = atoi(argv[3]);
+        if (!should_build_binary_package)
+            install_pkg(argv[2]);
+        else
+            build_binary_package(argv[2]);
     }
     else if (strcmp(argv[1], "install-bin-pkg") == 0)
     {
