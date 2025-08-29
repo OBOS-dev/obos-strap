@@ -22,6 +22,8 @@ extern const char* repo_directory;
 extern const char* recipes_directory;
 // Cached info about built packages goes here.
 extern const char* pkg_info_directory;
+// The repository root directory (i.e., the CWD at start)
+extern const char* root_directory;
 
 extern int g_argc;
 extern char** g_argv;

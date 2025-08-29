@@ -47,6 +47,7 @@ bootstrap_directory: Output of bootstrap commands goes here, as well as built bi
                name: The name field of the package.
         description: The description field of the package.
      repo_directory: Cloned repositories and decompressed archives.
+     root_directory: Repository root directory.
              prefix: The prefix directory. This can change depending on whether this is a host package or not.
         host_prefix: The host prefix directory.
       target_prefix: The target prefix directory.

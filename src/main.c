@@ -38,6 +38,7 @@
 
 const char* prefix_directory = "./pkgs";
 const char* host_prefix_directory = "./host_pkgs";
+const char* root_directory = ".";
 const char* binary_package_directory = "./bin_pkgs/";
 const char* bootstrap_directory = "./bootstrap";
 const char* repo_directory = "./repos";
@@ -201,6 +202,7 @@ int main(int argc, char **argv)
     g_argc = argc;
     g_argv = argv;
 
+    root_directory = realpath(root_directory, NULL);
     pkg_info_directory = realpath(pkg_info_directory, NULL);
     prefix_directory = realpath(prefix_directory, NULL);
     host_prefix_directory = realpath(host_prefix_directory, NULL);
@@ -242,7 +244,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    cJSON*  child = cJSON_GetObjectItem(context, "cross-compile");
+    cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
     g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
     child = cJSON_GetObjectItem(context, "binary-packages-default");
     g_config.binary_packages_default = child ? !!cJSON_GetNumberValue(child) : false;

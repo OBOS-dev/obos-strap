@@ -317,6 +317,11 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = host_prefix_directory;
                 subst_len = strlen(subst_str);
             }
+            else if (strncmp(subst_str, "root_directory", subst_len) == 0)
+            {
+                subst_str = root_directory;
+                subst_len = strlen(subst_str);
+            }
             else if (strncmp(subst_str, "nproc", subst_len) == 0)
             {
                 subst_free = true;
