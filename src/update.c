@@ -25,7 +25,11 @@ for line in $UPDATED; do\n\
         PACKAGE=$line\n\
         PACKAGE=${PACKAGE%%.json}\n\
         PACKAGE=${PACKAGE#recipes/}\n\
-        yes | ./obos-strap rebuild $PACKAGE\n\
+        ./obos-strap outdated $PACKAGE\n\
+        if [[ $? -eq 0 ]];\n\
+        then\n\
+            ./obos-strap install $PACKAGE\n\
+        fi\n\
     fi\n\
 done\n\
 unset IFS";
