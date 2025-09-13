@@ -1,6 +1,9 @@
 /build/
 /tests/pkgs
+/tests/bin_pkgs
+/tests/host_pkgs
 /tests/repos
 /tests/bootstrap
 /tests/pkginfo
 /out/
+/.cache/
