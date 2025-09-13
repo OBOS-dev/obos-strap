@@ -152,3 +152,4 @@ bool package_outdated(package* pkg, struct pkginfo* info, int since_state);
 package* get_package(const char* pkg_name);
 
 int run_command(const char* proc, string_array argv);
+int run_command_supress_output(const char* proc, string_array argv);

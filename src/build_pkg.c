@@ -269,7 +269,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         string_array argv = {};
         string_array_append(&argv, pkg->host_provides);
         string_array_append(&argv, "-v");
-        int ec = run_command(pkg->host_provides, argv);
+        int ec = run_command_supress_output(pkg->host_provides, argv);
         if (!ec)
         {
             // It exists.
