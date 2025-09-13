@@ -504,9 +504,14 @@ bool package_outdated(package* pkg, struct pkginfo* info, int since_state)
     if (!info)
         info = read_package_info(pkg->name);
     assert(info);
+
+    // If we change package host triplets
+    if (strncmp(pkg->host_package ? g_config.host_triplet : g_config.target_triplet, info->host_triplet, info->host_triplet_len) != 0)
+        return true;
    
     if (info->build_state > since_state)
         return true;
+    
     if (!do_version_cmp(VERSION_CMP_EQUAL, info->version, pkg->version))
         return true;
     
