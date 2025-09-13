@@ -24,6 +24,10 @@ find_package(cJSON REQUIRED)
 
 find_package(CURL)
 
+if (NOT UNIX)
+    message(FATAL_ERROR "obos-strap only supports unix-based systems")
+endif()
+
 if (${CURL_FOUND})
     add_compile_definitions(HAS_LIBCURL=1)
     set(HAS_CURL 1)

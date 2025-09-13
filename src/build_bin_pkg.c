@@ -38,12 +38,6 @@ void build_binary_package(const char* name)
         unlock();
         return;
     }
-    if (pkg->host_package)
-    {
-        printf("%s: Refusing to build binary package for host package %s.\n", g_argv[0], pkg->name);
-        unlock();
-        return;
-    }
     printf("Building binary package for %s.\n", pkg->name);
     curl_handle curl_hnd = init_curl();
     if (!curl_hnd)
@@ -74,9 +68,15 @@ void build_binary_package(const char* name)
 
     char *bin_package_path = NULL;
     size_t bin_package_path_len = 0;
-    bin_package_path_len = snprintf(NULL,0, "%s/%s.tar", binary_package_directory, pkg->name);
+    bin_package_path_len = snprintf(NULL,0, "%s/%s-%d.%d.%d.tar", 
+        binary_package_directory,
+        pkg->name,
+        pkg->version.arr[0], pkg->version.arr[1], pkg->version.arr[2]);
     bin_package_path = malloc(bin_package_path_len+1);
-    snprintf(bin_package_path, bin_package_path_len+1, "%s/%s.tar", binary_package_directory, pkg->name);
+    snprintf(bin_package_path, bin_package_path_len+1, "%s/%s-%d.%d.%d.tar", 
+        binary_package_directory,
+        pkg->name,
+        pkg->version.arr[0], pkg->version.arr[1], pkg->version.arr[2]);
 
     command_array run_tar = {};
     command tar_cmd = {.proc="tar"};
@@ -88,6 +88,7 @@ void build_binary_package(const char* name)
     string_array_append(&tar_cmd.argv, "*");
 
     string_array_append(&gz_cmd.argv, "gzip");
+    string_array_append(&gz_cmd.argv, "-qf9");
     string_array_append(&gz_cmd.argv, bin_package_path);
 
     command_array_append(&run_tar, &tar_cmd);

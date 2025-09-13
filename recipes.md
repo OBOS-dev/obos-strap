@@ -5,6 +5,12 @@ Examples can be found under [tests/recipes](tests/recipes)
 - The name of the package.<br/>
 #### description: string (optional)
 - A light description of the package.<br/>
+#### version: string
+- The current package version <br/>
+- The version is defined as follows:
+```json
+"version": [ major,minor,patch ]
+```
 #### git-url: string
 - The URL of the git repo to clone<br/>
 #### git-commit: string (required if git-url is present)
@@ -21,7 +27,7 @@ Examples can be found under [tests/recipes](tests/recipes)
     {
         "modifies": "path/to/file",
         "patch": "path/to/patch",
-	"delete-file": 0,
+	    "delete-file": 0,
     }
 ]
 ```

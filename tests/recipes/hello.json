@@ -1,16 +1,18 @@
 {
     "name": "hello",
     "description": "Print a friendly, customizable greeting.",
-    "url": "https://mirror.csclub.uwaterloo.ca/gnu/hello/hello-2.12.1.tar.gz",
-    "depends": [ "bash" ],
+    "url": "https://mirror.csclub.uwaterloo.ca/gnu/hello/hello-2.12.2.tar.gz",
+    "version": [ 2,12,2 ],
+    "depends": [ "bash>=5.3.0" ],
     "patches": [],
     "bootstrap-commands": [
-        [ "${repo_directory}/hello-2.12.1/configure", "--prefix", "${prefix}" ]
+        [ "${repo_directory}/hello-2.12.1/configure", "--prefix", "/" ]
     ],
     "build-commands": [
         [ "make", "all" ]
     ],
     "install-commands": [
-        [ "make", "install" ]
+        [ "make", "install", "prefix=${prefix}" ],
+        [ "make", "install", "prefix=${bin_package_prefix}/usr" ]
     ]
 }

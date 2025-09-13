@@ -36,7 +36,7 @@ curl_handle init_curl()
     if (!hnd)
         return hnd;
     curl_err = malloc(CURL_ERROR_SIZE*4);
-    curl_easy_setopt(hnd, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(hnd, CURLOPT_FOLLOWLOCATION, 1UL);
     curl_easy_setopt(hnd, CURLOPT_ERRORBUFFER, curl_err);
     return hnd;
 }
@@ -73,6 +73,7 @@ static char* download_archive(curl_handle hnd, const char* url)
 
 static bool extract_archive(const char* url, const char* name, char* archive_path)
 {
+    (void)(url && name);
     // TODO: Use a library?
     string_array argv = {};
     string_array_append(&argv, "tar");
@@ -291,29 +292,63 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     // Satisfy dependencies.
     for (size_t i = 0; i < pkg->depends.cnt && satisfy_dependencies; i++)
     {
-        const char* depend = pkg->depends.buf[i];
-//      printf("Looking for dependency %s\n", depend);
+        const char* depend_expr = pkg->depends.buf[i];
+        char* depend = NULL;
+        union package_version depend_version = {};
+        int version_cmp = 0;
+        parse_depend_expr(depend_expr, &depend, &depend_version, &version_cmp);
+        if (!depend)
+        {
+            printf("%s: While satisfying dependencies for package %s: Invalid expression '%s'\nAbort.\n", g_argv[0], pkg->name, depend_expr);
+            return false;
+        }
+        
         package* depend_pkg = get_package(depend);
         if (!depend_pkg)
         {
             printf("%s: While satisfying dependencies for package %s: Invalid or unknown package '%s'\nAbort.\n", g_argv[0], pkg->name, depend);
             return false;
         }
-        // TODO: Make non-recursive?
-        struct pkginfo* info = read_package_info(pkg->name);
-        if (info->build_state < (BUILD_STATE_BUILT+install))
-            printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
-        else
+        if (strcmp(depend_pkg->name, pkg->name) == 0)
         {
-            free(info);
-            continue;
+            printf("%s: While satisfying dependencies for package %s: Recursive dependency.\nAbort.\n", g_argv[0], pkg->name);
+            return false;
         }
-        free(info);
+        if (!do_version_cmp(version_cmp, depend_pkg->version, depend_version))
+        {
+            printf("%s: While satisfying dependencies for package %s: Could not satisfy dependency. Requires: %s, got: %s=%d.%d.%d)\nAbort.\n", 
+                g_argv[0], pkg->name,
+                depend_expr,
+                depend_pkg->name,
+                depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch
+            );
+            return false;
+        }
+        // TODO: Make non-recursive?
+        // struct pkginfo* info = read_package_info(pkg->name);
+        // if ((info->build_state < (BUILD_STATE_BUILT+install)) || (version_cmp == VERSION_CMP_NONE ? false : version_less_than(info->version, depend_pkg->version) ))
+        //     printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
+        // else
+        // {
+        //     free(info);
+        //     continue;
+        // }
+        // free(info);
+        if (depend != depend_expr)
+            free(depend);
         if (!build_pkg_internal(depend_pkg, curl_hnd, install, satisfy_dependencies))
             return false;
     }
 
     struct pkginfo* info = read_package_info(pkg->name);
+    if (!do_version_cmp(VERSION_CMP_EQUAL, info->version, pkg->version))
+    {
+        info->build_state = BUILD_STATE_CLEAN;
+        info->configure_date = (struct timeval){};
+        info->build_date = (struct timeval){};
+        info->install_date = (struct timeval){};
+        write_package_info(pkg->name, info);    
+    }
     if (info->build_state < BUILD_STATE_FETCHED)
     {
         if (!fetch(pkg, curl_hnd))
@@ -395,6 +430,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         info->cross_compiled = g_config.cross_compiling;
 
         gettimeofday(&info->configure_date, NULL);
+        info->version = pkg->version;
 
         write_package_info(pkg->name, info);
     }
@@ -421,7 +457,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
 
         info->build_state = BUILD_STATE_BUILT;
-        gettimeofday(&info->configure_date, NULL);
+        info->version = pkg->version;
+        gettimeofday(&info->build_date, NULL);
         write_package_info(pkg->name, info);
     }
 
@@ -447,7 +484,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
 
         info->build_state = BUILD_STATE_INSTALLED;
-        gettimeofday(&info->configure_date, NULL);
+        info->version = pkg->version;
+        gettimeofday(&info->install_date, NULL);
         write_package_info(pkg->name, info);
     }
 

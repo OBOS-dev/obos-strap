@@ -48,6 +48,35 @@ void patch_array_append(patch_array* arr, patch* ptch);
 patch* patch_array_at(patch_array* arr, size_t idx);
 void patch_array_free(patch_array* arr);
 
+union package_version {
+    struct {
+        uint8_t major;
+        uint8_t minor;
+        uint8_t patch;
+    };
+    uint8_t arr[3];
+    uint32_t integer;
+} __attribute__((packed));
+static inline bool version_less_than(const union package_version lhs, const union package_version rhs)
+{
+    if (lhs.major < rhs.major) return true;
+    if (lhs.minor < rhs.minor) return true;
+    if (lhs.patch < rhs.patch) return true;
+    return false;
+}
+
+enum {
+    VERSION_CMP_NONE,
+    VERSION_CMP_LESS,   
+    VERSION_CMP_LESS_EQUAL,   
+    VERSION_CMP_GREATER,   
+    VERSION_CMP_GREATER_EQUAL,   
+    VERSION_CMP_EQUAL,
+};
+bool do_version_cmp(int how, union package_version lhs, union package_version rhs);
+// If *how_cmp is set to VERSION_CMP_NONE, then *depend = depend_expr
+void parse_depend_expr(const char* depend_expr, char** depend, union package_version* depend_version, int* how_cmp);
+
 typedef struct package {
     const char* config_file_path;
 
@@ -81,6 +110,8 @@ typedef struct package {
     command_array bootstrap_commands;
     command_array run_commands;
 
+    union package_version version;
+
     bool host_package : 1;
     bool supports_binary_packages : 1;
 } package;
@@ -103,7 +134,8 @@ struct pkginfo {
     struct timeval build_date;
     struct timeval install_date;
     uint64_t cross_compiled;
-    uint64_t resv[4];
+    union package_version version;
+    __attribute__((aligned(1))) uint8_t resv[32 - sizeof (union package_version)];
     uint64_t host_triplet_len;
     char host_triplet[]; // the triplet of the host this package is intended to run on.
 };

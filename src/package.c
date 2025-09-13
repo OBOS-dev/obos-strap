@@ -486,6 +486,26 @@ char* package_make_bin_prefix(package* pkg)
     return buf;
 }
 
+bool get_version(cJSON* context, const char* field_name, union package_version* out)
+{
+    cJSON* child_ctx = cJSON_GetObjectItem(context, field_name);
+    if (!child_ctx)
+        return false;
+    union package_version ret = {};
+    cJSON *elements[3] = {
+        cJSON_GetArrayItem(child_ctx, 0),
+        cJSON_GetArrayItem(child_ctx, 1),
+        cJSON_GetArrayItem(child_ctx, 2),
+    };
+    for (int i = 0; i < 3; i++)
+        if (elements[i] ? !cJSON_IsNumber(elements[i]) : true)
+            return false;
+    for (int i = 0; i < 3; i++)
+        ret.arr[i] = elements[i] ? (int)cJSON_GetNumberValue(elements[i]) : 0;
+    *out = ret;
+    return true;
+}
+
 package* get_package(const char* pkg_name)
 {
     if (strlen(pkg_name) == 0)
@@ -528,6 +548,12 @@ package* get_package(const char* pkg_name)
     if (!pkg->name)
     {
         printf("%s: Invalid format or missing field 'name' in package JSON.\n", g_argv[0]);
+        free(json_data);
+        return NULL;
+    }
+    if (!get_version(context, "version", &pkg->version))
+    {
+        printf("%s: Invalid format or missing field 'version' in package JSON.\n", g_argv[0]);
         free(json_data);
         return NULL;
     }
@@ -731,6 +757,118 @@ struct pkginfo* read_package_info(const char* pkg_name)
     }
 
     return info;
+}
+
+// Format:
+// name[operator,version]
+// Example:
+// bash>=5.3.0
+// cross-gcc==14.2.0
+// binutils<=2.45
+void parse_depend_expr(const char* depend_expr, char** depend, union package_version* depend_version, int* version_cmp)
+{
+    char* op_location = strrchr(depend_expr, '=');
+    if (!op_location)
+    {
+        char* less_op_location = strrchr(depend_expr, '<');
+        char* greater_op_location = strrchr(depend_expr, '>');
+        if (less_op_location && greater_op_location)
+        {
+            *depend = NULL;
+            *depend_version = (union package_version){};
+            *version_cmp = VERSION_CMP_NONE;
+            return;
+        }
+        op_location = less_op_location ? less_op_location : greater_op_location;
+    }
+    if (!op_location)
+    {
+        *depend = (char*)depend_expr;
+        *version_cmp = VERSION_CMP_NONE;
+        *depend_version = (union package_version){};
+        return;
+    }
+    if (op_location == depend_expr)
+    {
+        *depend = NULL;
+        *depend_version = (union package_version){};
+        *version_cmp = VERSION_CMP_NONE;
+        return;
+    }
+    char* op_end = NULL;
+    if (*op_location == '=')
+    {
+        switch (*(op_location - 1)) {
+            case '<': *version_cmp = VERSION_CMP_LESS_EQUAL; break;
+            case '>': *version_cmp = VERSION_CMP_GREATER_EQUAL; break;
+            default: *version_cmp = VERSION_CMP_EQUAL; op_end = op_location + 1; goto out;
+        }
+        op_end = op_location + 1;
+        op_location--;
+    }
+    else if (*op_location == '<')
+    {
+        *version_cmp = VERSION_CMP_LESS;
+        op_end = op_location + 1;
+    }
+    else if (*op_location == '>')
+    {
+        *version_cmp = VERSION_CMP_GREATER;
+        op_end = op_location + 1;
+    }
+    else
+        abort(); // impossible
+    out:
+    (void)0;
+    union package_version version = {};
+    do {
+        char* iter = op_end;
+        for (int i = 0; i < 3; i++)
+        {
+            errno = 0;
+            version.arr[i] = strtoul(iter, &iter, 0 /* why would someone put hexadecimal in a version field? */);
+            if (errno != 0)
+            {
+                *depend = NULL;
+                *depend_version = (union package_version){};
+                *version_cmp = VERSION_CMP_NONE;
+                return;
+            }
+            if (i != 2 && *(iter++) != '.')
+            {
+                *depend = NULL;
+                *depend_version = (union package_version){};
+                *version_cmp = VERSION_CMP_NONE;
+                return;
+            }
+        }
+    } while(0);
+    
+    char* depend_str = malloc((op_location - depend_expr) + 1);
+    memcpy(depend_str, depend_expr, (op_location - depend_expr));
+    depend_str[op_location - depend_expr] = 0;
+    
+    *depend = depend_str;
+    *depend_version = version;
+    return;
+}
+
+bool do_version_cmp(int how, union package_version lhs, union package_version rhs)
+{
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    lhs.integer = __builtin_bswap32(lhs.integer);
+    rhs.integer = __builtin_bswap32(rhs.integer);
+#endif
+    switch (how) {
+        case VERSION_CMP_NONE: return true;
+        case VERSION_CMP_LESS: return lhs.integer < rhs.integer;
+        case VERSION_CMP_LESS_EQUAL: return lhs.integer <= rhs.integer;
+        case VERSION_CMP_GREATER_EQUAL: return lhs.integer >= rhs.integer;
+        case VERSION_CMP_GREATER: return lhs.integer > rhs.integer;
+        case VERSION_CMP_EQUAL: return lhs.integer == rhs.integer;
+        default: break;
+    }
+    abort();
 }
 
 void write_package_info(const char* pkg_name, struct pkginfo* info)
