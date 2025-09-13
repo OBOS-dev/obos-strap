@@ -516,7 +516,7 @@ bool package_outdated(package* pkg, struct pkginfo* info, int since_state)
     return timercmp(&cmp_time, &file_time, <);
 }
 
-bool get_version(cJSON* context, const char* field_name, union package_version* out)
+static bool get_version(cJSON* context, const char* field_name, union package_version* out)
 {
     cJSON* child_ctx = cJSON_GetObjectItem(context, field_name);
     if (!child_ctx)
@@ -528,7 +528,7 @@ bool get_version(cJSON* context, const char* field_name, union package_version* 
         cJSON_GetArrayItem(child_ctx, 2),
     };
     for (int i = 0; i < 3; i++)
-        if (elements[i] ? !cJSON_IsNumber(elements[i]) : true)
+        if (elements[i] ? !cJSON_IsNumber(elements[i]) : false)
             return false;
     for (int i = 0; i < 3; i++)
         ret.arr[i] = elements[i] ? (int)cJSON_GetNumberValue(elements[i]) : 0;
