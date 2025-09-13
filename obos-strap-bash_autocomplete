@@ -4,7 +4,7 @@ _foo()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg"
+    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated"
 
     packages=""
     recipes=`ls -c1 recipes/*`
@@ -16,7 +16,7 @@ _foo()
         packages="$packages $PACKAGE "
     done
 
-    if [[ "${prev}" == "build" || "${prev}" == "install" || "${prev}" == "rebuild" || "${prev}" == "run" || "${prev}" == "install-bin-pkg" ]];
+    if [[ "${prev}" == "build" || "${prev}" == "install" || "${prev}" == "rebuild" || "${prev}" == "run" || "${prev}" == "outdated" || "${prev}" == "install-bin-pkg" ]];
     then
         COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
         return 0

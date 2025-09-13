@@ -1,0 +1,13 @@
+{
+    "name": "empty",
+    "description": "empty",
+    "version": [ 1,0,0 ],
+    "depends": [],
+    "patches": [],
+    "bootstrap-commands": [],
+    "build-commands": [],
+    "install-commands": [],
+    "run-commands": [
+        [ "echo", "${version}" ]
+    ]
+}

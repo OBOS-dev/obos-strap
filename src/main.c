@@ -16,6 +16,7 @@
 #include <cjson/cJSON.h>
 
 #include "lock.h"
+#include "package.h"
 #include "path.h"
 #include "update.h"
 
@@ -57,7 +58,7 @@ int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update, install-bin-pkg\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update, install-bin-pkg, outdated\n";
 
 const char* version =
 "obos-strap v0.0.1\n"
@@ -297,6 +298,15 @@ int main(int argc, char **argv)
             return -1;
         }
         build_binary_package(argv[2]);
+    }
+    else if (strcmp(argv[1], "outdated") == 0)
+    {
+        if (argc < 3)
+        {
+            printf("%s outdated pkg\n", argv[0]);
+            return -1;
+        }
+        return package_outdated(get_package(argv[2]), NULL, BUILD_STATE_INSTALLED);    
     }
     else if (strcmp(argv[1], "update") == 0)
         update();

@@ -4,6 +4,8 @@
  * Copyright (c) 2024-2025 Omar Berrow
  */
 
+#define _DEFAULT_SOURCE
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -18,6 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "package.h"
 #include "path.h"
@@ -335,6 +338,14 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = g_config.target_triplet;
                 subst_len = strlen(subst_str);
             }
+            else if (strncmp(subst_str, "version", subst_len) == 0)
+            {
+                subst_free = true;
+                subst_len = snprintf(NULL, 0, "%u.%u.%u", pkg->version.major, pkg->version.minor, pkg->version.patch);
+                subst_str = malloc(subst_len+1);
+                snprintf((char*)subst_str, subst_len+1, "%u.%u.%u", pkg->version.major, pkg->version.minor, pkg->version.patch);
+                ((char*)subst_str)[subst_len] = 0;
+            }
             else if (strncmp(subst_str, "bin_package_prefix", subst_len) == 0)
             {
                 subst_str = package_make_bin_prefix(pkg);
@@ -486,6 +497,25 @@ char* package_make_bin_prefix(package* pkg)
     return buf;
 }
 
+bool package_outdated(package* pkg, struct pkginfo* info, int since_state)
+{
+    if (!pkg)
+        return false; // a package that doesn't exist isn't outdated (or is it?)
+    if (!info)
+        info = read_package_info(pkg->name);
+    assert(info);
+   
+    if (info->build_state > since_state)
+        return true;
+    if (!do_version_cmp(VERSION_CMP_EQUAL, info->version, pkg->version))
+        return true;
+    
+    struct timeval file_time = pkg->recipe_mod_time;    
+    struct timeval cmp_time = info->build_times[info->build_state - BUILD_STATE_CONFIGURED];
+
+    return timercmp(&cmp_time, &file_time, <);
+}
+
 bool get_version(cJSON* context, const char* field_name, union package_version* out)
 {
     cJSON* child_ctx = cJSON_GetObjectItem(context, field_name);
@@ -541,6 +571,9 @@ package* get_package(const char* pkg_name)
     }
 
     package* pkg = calloc(1, sizeof(package));
+
+    pkg->recipe_mod_time.tv_sec = st.st_mtim.tv_sec;
+    pkg->recipe_mod_time.tv_usec = st.st_mtim.tv_nsec / 1000;
 
     // Populate the package info.
     pkg->config_file_path = pkg_path;

@@ -60,6 +60,7 @@ bootstrap_directory: Output of bootstrap commands goes here, as well as built bi
               nproc: The CPU count of the system.
      target_triplet: The target triplet.
  bin_package_prefix: The directory in which files should be installed for binary packages
+            version: The package version
 ```
 - To access these, do ${insert_name_here}
 - To access an environment variable, do $ENV

@@ -341,7 +341,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     }
 
     struct pkginfo* info = read_package_info(pkg->name);
-    if (!do_version_cmp(VERSION_CMP_EQUAL, info->version, pkg->version))
+    if (package_outdated(pkg, info, BUILD_STATE_BUILT + (int)install))
     {
         info->build_state = BUILD_STATE_CLEAN;
         info->configure_date = (struct timeval){};
@@ -561,7 +561,7 @@ void run_pkg(const char* name)
         return;
     }
     struct pkginfo* info = read_package_info(name);
-    if (info->build_state < BUILD_STATE_INSTALLED)
+    if (package_outdated(pkg, info, BUILD_STATE_INSTALLED))
     {
         curl_handle curl_hnd = init_curl();
         if (!curl_hnd)
