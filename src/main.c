@@ -306,7 +306,7 @@ int main(int argc, char **argv)
             printf("%s outdated pkg\n", argv[0]);
             return -1;
         }
-        return package_outdated(get_package(argv[2]), NULL, BUILD_STATE_INSTALLED);    
+        return !package_outdated(get_package(argv[2]), NULL, BUILD_STATE_INSTALLED);    
     }
     else if (strcmp(argv[1], "update") == 0)
         update();
