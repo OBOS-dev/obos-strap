@@ -302,7 +302,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             printf("%s: While satisfying dependencies for package %s: Invalid expression '%s'\nAbort.\n", g_argv[0], pkg->name, depend_expr);
             return false;
         }
-        
+
         package* depend_pkg = get_package(depend);
         if (!depend_pkg)
         {
