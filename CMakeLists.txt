@@ -24,8 +24,8 @@ find_package(cJSON REQUIRED)
 
 find_package(CURL)
 
-if (NOT UNIX)
-    message(FATAL_ERROR "obos-strap only supports unix-based systems")
+if (MSVC)
+    message(FATAL_ERROR "obos-strap cannot be compiled with MSVC")
 endif()
 
 if (${CURL_FOUND})
