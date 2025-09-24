@@ -735,7 +735,20 @@ struct pkginfo* read_package_info(const char* pkg_name)
     struct stat st = {};
     fstat(fileno(file), &st);
     struct pkginfo* info = malloc(st.st_size+1);
-    fread(info, st.st_size, 1, file);
+    size_t nRead = 0;
+    while ((nRead += fread(((char*)info) + nRead, 1, st.st_size - nRead, file)) < st.st_size)
+    {
+        if (feof(file))
+        {
+            fprintf(stderr, "Unexpected EOF while reading pkginfo for package '%s'\n", pkg_name);
+            abort();
+        }
+        else if (ferror(file))
+        {
+            fprintf(stderr, "Unexpected error '%s' while reading pkginfo for package '%s'\n", strerror(errno), pkg_name);
+            abort();
+        }
+    }
     fclose(file);
 
     if (info->build_state > BUILD_STATE_INSTALLED)
@@ -921,6 +934,14 @@ void write_package_info(const char* pkg_name, struct pkginfo* info)
         perror("fopen");
         return;
     }
-    fwrite(info, sizeof(*info)+info->host_triplet_len, 1, file);
+    size_t nWritten = 0;
+    while ((nWritten += fwrite(((char*)info) + nWritten, 1, sizeof(*info) + info->host_triplet_len - nWritten, file)) < sizeof(*info)+info->host_triplet_len)
+    {
+        if (ferror(file))
+        {
+            fprintf(stderr, "Unexpected error '%s' while reading pkginfo for package '%s'\n", strerror(errno), pkg_name);
+            abort();
+        }
+    }
     fclose(file);
 }
