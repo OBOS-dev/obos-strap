@@ -338,6 +338,11 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = g_config.target_triplet;
                 subst_len = strlen(subst_str);
             }
+            else if (strncmp(subst_str, "host_triplet", subst_len) == 0)
+            {
+                subst_str = g_config.host_triplet;
+                subst_len = strlen(subst_str);
+            }
             else if (strncmp(subst_str, "version", subst_len) == 0)
             {
                 subst_free = true;
