@@ -341,7 +341,18 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
     }
 
     struct pkginfo* info = read_package_info(pkg->name);
-    if (package_outdated(pkg, info, BUILD_STATE_BUILT + (int)install))
+    if (!info->host_triplet_len)
+    {
+        // This is a new pkginfo file with no target triplet compiled into it
+        const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+        info->host_triplet_len = strlen(triplet);
+        info = realloc(info, sizeof(*info) + info->host_triplet_len);
+	    assert(info);
+        memcpy(info->host_triplet, triplet, info->host_triplet_len);
+        info->cross_compiled = g_config.cross_compiling;
+        write_package_info(pkg->name, info);
+    }
+    if (!pkg->inhibit_auto_rebuild && package_outdated(pkg, info, BUILD_STATE_BUILT + (int)install) && info->build_state >= BUILD_STATE_CONFIGURED)
     {
         info->build_state = BUILD_STATE_CLEAN;
         info->configure_date = (struct timeval){};
@@ -371,6 +382,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             }
         }
         info->build_state = BUILD_STATE_FETCHED;
+        info->version = pkg->version;
         write_package_info(pkg->name, info);
     }
 
@@ -421,17 +433,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         }
 
         info->build_state = BUILD_STATE_CONFIGURED;
-
-        const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
-        info->host_triplet_len = strlen(triplet);
-        info = realloc(info, sizeof(*info) + info->host_triplet_len);
-	assert(info);
-        memcpy(info->host_triplet, triplet, info->host_triplet_len);
-        info->cross_compiled = g_config.cross_compiling;
-
         gettimeofday(&info->configure_date, NULL);
         info->version = pkg->version;
-
         write_package_info(pkg->name, info);
     }
 

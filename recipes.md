@@ -45,6 +45,8 @@ Examples can be found under [tests/recipes](tests/recipes)
 - Commands run when obos-strap run is executed on the package. These commands will be run in the directory obos-strap was run in.<br/>
 #### host-package: boolean (optional, defaults to false)
 - Whether this package is a host package or target package. Ignored if not cross compiling.
+#### inhibit-auto-rebuild: boolean (optional, defaults to false)
+- Whether obos-strap is allowed to automatically rebuild this package.
 #### host-provides: string (optional, defaults to nothing)
 - The name of an executable that this host package provides, to avoid rebuilding compilers, or other packages that are only needed once.
 ## Valid substitution strings in commands:

@@ -144,6 +144,7 @@ typedef struct package {
 
     bool host_package : 1;
     bool supports_binary_packages : 1;
+    bool inhibit_auto_rebuild : 1;
 } package;
 char* package_make_bin_prefix(package* pkg);
 // info can be NULL

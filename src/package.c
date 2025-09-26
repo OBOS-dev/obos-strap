@@ -188,6 +188,14 @@ static const char* get_str_field_subst(cJSON* parent, const char* fieldname, pac
     return arg;
 }
 
+static bool get_boolean_field(cJSON* parent, const char* fieldname, bool default_ret)
+{
+    cJSON *obj = cJSON_GetObjectItem(parent, fieldname);
+    if (!obj)
+        return default_ret;
+    return cJSON_IsTrue(obj);
+}
+
 static int get_str_array_field(cJSON* parent, const char* fieldname, string_array* arr)
 {
     cJSON* child = cJSON_GetObjectItem(parent, fieldname);
@@ -584,6 +592,8 @@ package* get_package(const char* pkg_name)
 
     pkg->recipe_mod_time.tv_sec = st.st_mtim.tv_sec;
     pkg->recipe_mod_time.tv_usec = st.st_mtim.tv_nsec / 1000;
+
+    pkg->inhibit_auto_rebuild = get_boolean_field(context, "inhibit-auto-rebuild", false);
 
     // Populate the package info.
     pkg->config_file_path = pkg_path;
