@@ -172,6 +172,8 @@ static bool clone_repository(const char* pkg_name, const char* url, const char* 
     string_array argv = {};
     string_array_append(&argv, "git");
     string_array_append(&argv, "clone");
+    string_array_append(&argv, "--depth=1");
+    string_array_append(&argv, "--recurse-submodules");
     string_array_append(&argv, url);
     string_array_append(&argv, "-b");
     string_array_append(&argv, hash);
