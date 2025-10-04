@@ -440,18 +440,31 @@ int main(int argc, char **argv)
                 opt_key = opt_str;
                 opt_val_str = NULL;
             }
-            errno = 0;
-            long opt_val_int = strtol(opt_val_str, NULL, 0);
-            if (errno != 0)
-                opt_val_int = LONG_MAX;
-            bool opt_val_bool_valid = true;
-            bool opt_val_bool = 
-                strcasecmp(opt_val_str, "true") == 0 ? 
-                    true : strcasecmp(opt_val_str, "false") ? 
-                        false : (opt_val_int == LONG_MAX ? (opt_val_bool_valid = false) : !!opt_val_int);
+            if (opt_val_str)
 
+            errno = 0;
+            long opt_val_int = 0;
+            bool opt_val_bool_valid = true;
+            bool opt_val_bool = false;
+            if (opt_val_str)
+            {
+                opt_val_int = strtol(opt_val_str, NULL, 0);
+                if (errno != 0)
+                    opt_val_int = LONG_MAX;
+                opt_val_bool = 
+                    strcasecmp(opt_val_str, "true") == 0 ? 
+                        true : strcasecmp(opt_val_str, "false") ? 
+                            false : (opt_val_int == LONG_MAX ? (opt_val_bool_valid = false) : !!opt_val_int);
+            }
+            else
+                opt_val_bool_valid = false;
             if (strcasecmp(opt_key, "verbose") == 0)
             {
+                if (!opt_val_str)
+                {
+                    opt_val_bool = true;
+                    opt_val_bool_valid = true;
+                }
                 if (!opt_val_bool_valid)
                 {
                     printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
@@ -461,6 +474,11 @@ int main(int argc, char **argv)
             }
             else if (strcasecmp(opt_key, "installed-only") == 0)
             {
+                if (!opt_val_str)
+                {
+                    opt_val_bool = false;
+                    opt_val_bool_valid = true;
+                }
                 if (!opt_val_bool_valid)
                 {
                     printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
