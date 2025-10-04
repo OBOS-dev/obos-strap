@@ -103,6 +103,7 @@ struct pkginfo {
 
 // NOTE: Creates a new struct pkginfo and writes it to disk, if it is unpresent.
 struct pkginfo* read_package_info(const char* pkg_name);
+struct pkginfo* read_package_info_ex(const char* pkg_name, bool create, bool validate);
 void write_package_info(const char* pkg_name, struct pkginfo* info);
 
 typedef struct package {
@@ -154,3 +155,8 @@ package* get_package(const char* pkg_name);
 
 int run_command(const char* proc, string_array argv);
 int run_command_supress_output(const char* proc, string_array argv);
+
+// if cb returns non-zero, the function aborts.
+// pkg and info are owned by the callback at time of called,
+// and are to be freed by the callback
+void foreach_package(bool installed_only, int(*cb)(package* pkg, struct pkginfo* info, void *userdata), void *userdata);

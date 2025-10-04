@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <errno.h>
+#include <strings.h>
 #include <cjson/cJSON.h>
 
 #include "lock.h"
@@ -89,6 +91,70 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
 ;
 
 struct config g_config;
+
+struct list_cb_user {
+    bool verbose : 1;
+    bool installed_only : 1;
+};
+int list_cb(package* pkg, struct pkginfo* info, void* userdata)
+{
+    struct list_cb_user* opt = userdata;
+    if (!opt->verbose)
+        printf("%s\n", pkg->name);
+    else if (info)
+    {
+        static char const* const build_state_strs[] = {
+            "CLEAN",
+            "FETCHED",
+            "CONFIGURED",
+            "BUILT",
+            "INSTALLED",
+        };
+        static char const* const weekdays[] = {
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        };
+        static char const* const months[] = {
+            "January",
+            "Febuary",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        };
+        struct tm* tm_info = NULL;
+        if (info->build_state > BUILD_STATE_CONFIGURED && info->build_state <= BUILD_STATE_INSTALLED)
+            tm_info = localtime(&info->build_times[info->build_state-BUILD_STATE_CONFIGURED].tv_sec);
+        printf("%s@%d.%d.%d-%.*s BUILD_STATE_%s at %d:%d:%d on %s, %s %d, %d\n",
+            pkg->name,
+            info->version.major, info->version.minor,
+            info->version.patch,
+            (int)info->host_triplet_len, info->host_triplet,
+            info->build_state < (sizeof(build_state_strs)/sizeof(*build_state_strs)) ? 
+                build_state_strs[info->build_state] :
+                "INVALID",
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            weekdays[tm_info->tm_wday],
+            months[tm_info->tm_mon],
+            tm_info->tm_mday,
+            tm_info->tm_year+1900
+        );
+    }
+    else
+        printf("%s@UNKNOWN-UNKNOWN BUILD_STATE_CLEAN\n", pkg->name);
+    return 0;
+}
 
 int main(int argc, char **argv)
 {
@@ -351,6 +417,64 @@ int main(int argc, char **argv)
         } while(c != 'y');
         clean();
     }
+    else if (strcmp(argv[1], "list") == 0)
+    {
+        struct list_cb_user opts = {};
+        for (size_t i = 2; i < (size_t)argc; i++)
+        {
+            const char* opt_str = argv[i];
+            const char* opt_key = NULL;
+            const char* opt_val_str = NULL;
+            bool free_opt_key = false;
+            const char* equal_sign = strchr(opt_str, '=');
+            if (equal_sign)
+            {
+                opt_val_str = equal_sign+1;
+                size_t sz_key = (equal_sign - opt_str);
+                opt_key = memcpy(malloc(sz_key + 1), opt_str, sz_key);
+                free_opt_key = true;
+            }
+            else 
+            {
+                free_opt_key = false;
+                opt_key = opt_str;
+                opt_val_str = NULL;
+            }
+            errno = 0;
+            long opt_val_int = strtol(opt_val_str, NULL, 0);
+            if (errno != 0)
+                opt_val_int = LONG_MAX;
+            bool opt_val_bool_valid = true;
+            bool opt_val_bool = 
+                strcasecmp(opt_val_str, "true") == 0 ? 
+                    true : strcasecmp(opt_val_str, "false") ? 
+                        false : (opt_val_int == LONG_MAX ? (opt_val_bool_valid = false) : !!opt_val_int);
+
+            if (strcasecmp(opt_key, "verbose") == 0)
+            {
+                if (!opt_val_bool_valid)
+                {
+                    printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
+                    return -1;
+                }
+                opts.verbose = opt_val_bool;
+            }
+            else if (strcasecmp(opt_key, "installed-only") == 0)
+            {
+                if (!opt_val_bool_valid)
+                {
+                    printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
+                    return -1;
+                }
+                opts.installed_only = opt_val_bool;
+            }
+            else
+                printf("Ignoring invalid option key %s\n", opt_key);
+            if (free_opt_key)
+                free((char*)opt_key);
+        }
+        foreach_package(opts.installed_only, list_cb, &opts);
+    }   
     else if (strcmp(argv[1], "rebuild") == 0)
     {
         if (argc < 3)

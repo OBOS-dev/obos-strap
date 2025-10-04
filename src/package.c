@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>
+#include <dirent.h>
 
 #include "package.h"
 #include "path.h"
@@ -724,6 +725,11 @@ package* get_package(const char* pkg_name)
 #define pkg_info_format "%s/pkginfo_%s.bin"
 struct pkginfo* read_package_info(const char* pkg_name)
 {
+    return read_package_info_ex(pkg_name, true, true);
+}
+
+struct pkginfo* read_package_info_ex(const char* pkg_name, bool create, bool validate)
+{
     size_t pathlen = snprintf(NULL, 0, pkg_info_format, pkg_info_directory, pkg_name);
     char* path = malloc(pathlen+1);
     snprintf(path, pathlen+1, pkg_info_format, pkg_info_directory, pkg_name);
@@ -732,7 +738,7 @@ struct pkginfo* read_package_info(const char* pkg_name)
     {
         if (errno != ENOENT)
             perror("fopen");
-        else {
+        else if (create) {
             struct pkginfo* info = calloc(1, sizeof(struct pkginfo));
             info->build_state = BUILD_STATE_CLEAN;
             file = fopen(path, "w");
@@ -771,6 +777,9 @@ struct pkginfo* read_package_info(const char* pkg_name)
         fprintf(stderr, "%s: Invalid or corrupt package info for package %s\n", g_argv[0], pkg_name);
         exit(-1);
     }
+
+    if (!validate)
+        return info;
 
     if (info->host_triplet_len == 0 && info->build_state >= BUILD_STATE_CONFIGURED)
     {
@@ -959,4 +968,61 @@ void write_package_info(const char* pkg_name, struct pkginfo* info)
         }
     }
     fclose(file);
+}
+
+void foreach_package(bool installed_only, int(*cb)(package* pkg, struct pkginfo* info, void *userdata), void *userdata)
+{
+    DIR* iter = NULL;
+    if (installed_only)
+        iter = opendir(pkg_info_directory);
+    else
+        iter = opendir(recipes_directory);
+    assert(iter);
+    if (!iter)
+        return;
+    struct dirent* ent = NULL;
+    while ((ent = readdir(iter)) != NULL)
+    {
+        if (ent->d_type != DT_REG)
+            continue;
+        const char* filename = ent->d_name;
+        char* pkg_name = NULL;
+        if (!installed_only)
+        {
+            char* end_recipe_name = strrchr(filename, '.');
+            if (!end_recipe_name)
+            {
+                printf("Invalid recipe filename %s\n", filename);
+                continue; // weirdness
+            }
+            size_t len_recipe_name = end_recipe_name - filename;
+            pkg_name = memcpy(malloc(len_recipe_name+1), filename, len_recipe_name);
+            pkg_name[len_recipe_name] = 0;
+        }
+        else
+        {
+            char* pkg_name_start = strchr(filename, '_');
+            if (!pkg_name_start)
+                continue; // probably just the README?
+            pkg_name_start++;
+            char* end_recipe_name = strrchr(pkg_name_start, '.');
+            if (!end_recipe_name)
+            {
+                printf("Invalid pkginfo filename %s\n", pkg_name_start);
+                continue; // weirdness
+            }
+            size_t len_recipe_name = end_recipe_name - pkg_name_start;
+            pkg_name = memcpy(malloc(len_recipe_name+1), pkg_name_start, len_recipe_name);
+            pkg_name[len_recipe_name] = 0;
+        }
+        package* pkg = get_package(pkg_name);
+        struct pkginfo* info = read_package_info_ex(pkg_name, false, false);
+        if (cb(pkg, info, userdata) != 0)
+        {
+            free(pkg_name);
+            break;
+        }
+        free(pkg_name);
+    }
+    closedir(iter);
 }
