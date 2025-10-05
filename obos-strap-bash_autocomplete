@@ -1,10 +1,11 @@
 _foo() 
 {
-    local cur prev opts packages recipes
+    local cmd cur prev opts packages recipes
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated"
+    cmd="${COMP_WORDS[1]}"
+    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated list"
 
     packages=""
     recipes=`ls -c1 recipes/*`
@@ -16,19 +17,34 @@ _foo()
         packages="$packages $PACKAGE "
     done
 
-    if [[ "${prev}" == "build" || "${prev}" == "install" || "${prev}" == "rebuild" || "${prev}" == "run" || "${prev}" == "outdated" || "${prev}" == "install-bin-pkg" ]];
+    if [[ "${cmd}" == "build" || "${cmd}" == "install" || "${cmd}" == "rebuild" || "${cmd}" == "run" || "${cmd}" == "outdated" || "${cmd}" == "install-bin-pkg" ]];
     then
+        if [[ $COMP_CWORD > 2 ]]
+        then
+            unset COMPREPLY
+            return 0
+        fi
         COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
         return 0
-    elif [[ "${prev}" == "force-unlock" || "${prev}" == "setup-env" || "${prev}" == "update" || "${prev}" == "install-all" || "${prev}" == "build-all" ||
-            "${prev}" == "clean" ]] 
+    elif [[ "${cmd}" == "force-unlock" || "${cmd}" == "setup-env" || "${cmd}" == "update" || "${cmd}" == "install-all" || "${cmd}" == "build-all" ||
+            "${cmd}" == "clean" ]] 
     then
         unset COMPREPLY
         return 0
-    elif [[ "${prev}" == "chroot" ]]
+    elif [[ "${cmd}" == "chroot" ]]
     then
+        if [[ $COMP_CWORD > 2 ]]
+        then
+            unset COMPREPLY
+            return 0
+        fi    
         compopt -o default
         COMPREPLY=()
+        return 0
+    elif [[ "${cmd}" == "list" ]]
+    then
+        subopts="verbose=true verbose=false installed-only=true installed-only=false ${packages}"
+        COMPREPLY=( $(compgen -W "${subopts}" -- ${cur}) )
         return 0
     else
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -37,3 +53,5 @@ _foo()
 }
 
 complete -F _foo obos-strap
+
+return 0
