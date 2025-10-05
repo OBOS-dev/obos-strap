@@ -457,14 +457,10 @@ int main(int argc, char **argv)
                             false : (opt_val_int == LONG_MAX ? (opt_val_bool_valid = false) : !!opt_val_int);
             }
             else
-                opt_val_bool_valid = false;
+                opt_val_bool = opt_val_bool_valid = true;
+
             if (strcasecmp(opt_key, "verbose") == 0)
             {
-                if (!opt_val_str)
-                {
-                    opt_val_bool = true;
-                    opt_val_bool_valid = true;
-                }
                 if (!opt_val_bool_valid)
                 {
                     printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
@@ -474,11 +470,6 @@ int main(int argc, char **argv)
             }
             else if (strcasecmp(opt_key, "installed-only") == 0)
             {
-                if (!opt_val_str)
-                {
-                    opt_val_bool = false;
-                    opt_val_bool_valid = true;
-                }
                 if (!opt_val_bool_valid)
                 {
                     printf("Invalid value to '%s'. Expected boolean, got %s\n", opt_key, opt_val_str);
