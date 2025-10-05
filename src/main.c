@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -93,6 +94,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
 struct config g_config;
 
 struct list_cb_user {
+    // For each package found, the entry in the packages
+    // array is set to nullptr
+    // If nPackages is zero, then all packages are listed.
+    const char** packages;
+    size_t nPackages;
+    size_t nPackagesListed;
     bool verbose : 1;
     bool installed_only : 1;
 };
@@ -136,23 +143,44 @@ int list_cb(package* pkg, struct pkginfo* info, void* userdata)
         struct tm* tm_info = NULL;
         if (info->build_state > BUILD_STATE_CONFIGURED && info->build_state <= BUILD_STATE_INSTALLED)
             tm_info = localtime(&info->build_times[info->build_state-BUILD_STATE_CONFIGURED].tv_sec);
-        printf("%s@%d.%d.%d-%.*s BUILD_STATE_%s at %d:%d:%d on %s, %s %d, %d\n",
-            pkg->name,
-            info->version.major, info->version.minor,
-            info->version.patch,
-            (int)info->host_triplet_len, info->host_triplet,
-            info->build_state < (sizeof(build_state_strs)/sizeof(*build_state_strs)) ? 
-                build_state_strs[info->build_state] :
-                "INVALID",
-            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
-            weekdays[tm_info->tm_wday],
-            months[tm_info->tm_mon],
-            tm_info->tm_mday,
-            tm_info->tm_year+1900
-        );
+        if (tm_info)
+        {
+            printf("%s@%d.%d.%d-%.*s BUILD_STATE_%s since %s, %s %02d, %d at %02d:%02d:%02d\n",
+                pkg->name,
+                info->version.major, info->version.minor,
+                info->version.patch,
+                (int)info->host_triplet_len, info->host_triplet,
+                info->build_state < (sizeof(build_state_strs)/sizeof(*build_state_strs)) ? 
+                    build_state_strs[info->build_state] :
+                    "INVALID",
+                weekdays[tm_info->tm_wday],
+                months[tm_info->tm_mon],
+                tm_info->tm_mday,
+                tm_info->tm_year+1900,
+                tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec
+            );
+        }
+        else
+        {
+            printf("%s@%d.%d.%d-%.*s BUILD_STATE_%s\n",
+                pkg->name,
+                info->version.major, info->version.minor,
+                info->version.patch,
+                (int)info->host_triplet_len, info->host_triplet,
+                info->build_state < (sizeof(build_state_strs)/sizeof(*build_state_strs)) ? 
+                    build_state_strs[info->build_state] :
+                    "INVALID"
+            );
+        }
     }
     else
-        printf("%s@UNKNOWN-UNKNOWN BUILD_STATE_CLEAN\n", pkg->name);
+        printf("%s@%d.%d.%d-%s BUILD_STATE_CLEAN\n", 
+            pkg->name, 
+            pkg->version.major, pkg->version.minor, pkg->version.patch,
+            pkg->host_package || !g_config.cross_compiling ? g_config.host_triplet : g_config.target_triplet
+        );
+    free(info);
+    free(pkg);
     return 0;
 }
 
@@ -440,14 +468,12 @@ int main(int argc, char **argv)
                 opt_key = opt_str;
                 opt_val_str = NULL;
             }
-            if (opt_val_str)
-
-            errno = 0;
             long opt_val_int = 0;
             bool opt_val_bool_valid = true;
             bool opt_val_bool = false;
             if (opt_val_str)
             {
+                errno = 0;
                 opt_val_int = strtol(opt_val_str, NULL, 0);
                 if (errno != 0)
                     opt_val_int = LONG_MAX;
@@ -478,11 +504,37 @@ int main(int argc, char **argv)
                 opts.installed_only = opt_val_bool;
             }
             else
-                printf("Ignoring invalid option key %s\n", opt_key);
+            {
+                // Probably a package to list.
+                opts.packages = realloc(opts.packages, (++opts.nPackages) * sizeof(const char*));
+                opts.packages[opts.nPackages - 1] = opt_key;
+                free_opt_key = false;
+            }
             if (free_opt_key)
                 free((char*)opt_key);
         }
-        foreach_package(opts.installed_only, list_cb, &opts);
+        if (!opts.nPackages)
+            foreach_package(opts.installed_only, list_cb, &opts);
+        else
+        {
+            for (size_t i = 0; i < opts.nPackages; i++)
+            {
+                package* pkg = get_package(opts.packages[i]);
+                if (!pkg)
+                {
+                    fprintf(stderr, "Could not find package '%s'\n", opts.packages[i]);
+                    continue;
+                }
+                struct pkginfo* info = read_package_info_ex(pkg->name, false, false);
+                if (!info && opts.installed_only)
+                {
+                    free(pkg);
+                    continue;
+                }
+                if (list_cb(pkg, info, &opts) != 0)
+                    break;
+            }
+        }
     }   
     else if (strcmp(argv[1], "rebuild") == 0)
     {
