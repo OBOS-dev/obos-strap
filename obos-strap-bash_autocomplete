@@ -6,6 +6,7 @@ _foo()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     cmd="${COMP_WORDS[1]}"
     opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated list"
+    export old_comp_wordbreaks="$COMP_WORDBREAKS"
 
     packages=""
     recipes=`ls -c1 recipes/*`
@@ -44,6 +45,7 @@ _foo()
     elif [[ "${cmd}" == "list" ]]
     then
         subopts="verbose=true verbose=false installed-only=true installed-only=false ${packages}"
+        COMP_WORDBREAKS=${COMP_WORDBREAKS//=/}
         COMPREPLY=( $(compgen -W "${subopts}" -- ${cur}) )
         return 0
     else
@@ -53,5 +55,10 @@ _foo()
 }
 
 complete -F _foo obos-strap
+
+if [[ -v old_comp_wordbreaks ]]
+then
+    COMP_WORDBREAKS="${old_comp_wordbreaks}"
+fi
 
 return 0
