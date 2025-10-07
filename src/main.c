@@ -61,7 +61,7 @@ int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, update, install-bin-pkg, outdated\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, list, update, install-bin-pkg, outdated\n";
 
 const char* version =
 "obos-strap v0.0.1\n"
@@ -297,25 +297,6 @@ int main(int argc, char **argv)
     g_argc = argc;
     g_argv = argv;
 
-    root_directory = realpath(root_directory, NULL);
-    pkg_info_directory = realpath(pkg_info_directory, NULL);
-    prefix_directory = realpath(prefix_directory, NULL);
-    host_prefix_directory = realpath(host_prefix_directory, NULL);
-    binary_package_directory = realpath(binary_package_directory, NULL);
-    bootstrap_directory = realpath(bootstrap_directory, NULL);
-    repo_directory = realpath(repo_directory, NULL);
-    recipes_directory = realpath(recipes_directory, NULL);
-    if (!recipes_directory)
-    {
-        printf("FATAL: Recipes directory does not exist.\n");
-        return -1;
-    }
-    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory || !binary_package_directory)
-    {
-        printf("One or more required directories are missing. Did you forget to run %s setup-env after cleaning?\n", g_argv[0]);
-        return -1;
-    }
-
     FILE* pkg_json = fopen("settings.json", "r");
     if (!pkg_json)
     {
@@ -336,6 +317,28 @@ int main(int argc, char **argv)
     {
         printf("%s: Parsing settings.json failed.\n", g_argv[0]);
         free(json_data);
+        return -1;
+    }
+
+    cJSON* prefix_override = cJSON_GetObjectItem(context, "prefix-override");
+    if (!cJSON_IsString(prefix_override))
+        prefix_override = NULL;
+    root_directory = realpath(root_directory, NULL);
+    pkg_info_directory = realpath(pkg_info_directory, NULL);
+    prefix_directory = realpath(prefix_override ? cJSON_GetStringValue(prefix_override) : prefix_directory, NULL);
+    host_prefix_directory = realpath(host_prefix_directory, NULL);
+    binary_package_directory = realpath(binary_package_directory, NULL);
+    bootstrap_directory = realpath(bootstrap_directory, NULL);
+    repo_directory = realpath(repo_directory, NULL);
+    recipes_directory = realpath(recipes_directory, NULL);
+    if (!recipes_directory)
+    {
+        printf("FATAL: Recipes directory does not exist.\n");
+        return -1;
+    }
+    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory || !binary_package_directory)
+    {
+        printf("One or more required directories are missing. Did you forget to run %s setup-env after cleaning?\n", g_argv[0]);
         return -1;
     }
 
