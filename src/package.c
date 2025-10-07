@@ -663,6 +663,10 @@ package* get_package(const char* pkg_name)
     }*/
 
     get_patch_array(context, "patches", &pkg->patches);
+    if (pkg->host_package)
+        pkg->host_provides = get_str_field_subst(context, "host-provides", pkg);
+
+    pkg->description = get_str_field(context, "description");
 
     if (get_command_array(context, "bootstrap-commands", &pkg->bootstrap_commands) != 0)
     {
@@ -713,11 +717,6 @@ package* get_package(const char* pkg_name)
 
     if (get_command_array(context, "run-commands", &pkg->run_commands) == 0)
         parse_command_array("run-commands", pkg, &pkg->run_commands);
-
-    if (pkg->host_package)
-        pkg->host_provides = get_str_field_subst(context, "host-provides", pkg);
-
-    pkg->description = get_str_field(context, "description");
 
     return pkg;
 }
