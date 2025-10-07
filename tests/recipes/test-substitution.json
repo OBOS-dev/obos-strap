@@ -1,0 +1,28 @@
+{
+    "name": "test-substitution",
+    "description": "Tests substitution",
+    "version": [ 1,0,0 ],
+    "depends": [],
+    "patches": [],
+    "bootstrap-commands": [],
+    "build-commands": [],
+    "install-commands": [],
+    "run-commands": [
+        [ "echo", "" ],
+        [ "echo", "Bootstrap directory: ${bootstrap_directory}" ],
+        [ "echo", "Name: ${name}" ],
+        [ "echo", "Description: ${description}" ],
+        [ "echo", "Repository directory: ${repo_directory}" ],
+        [ "echo", "Repository root directory: ${root_directory}" ],
+        [ "echo", "Prefix: ${prefix}" ],
+        [ "echo", "Host prefix: ${host_prefix}" ],
+        [ "echo", "Target prefix: ${target_prefix}" ],
+        [ "echo", "'nproc': ${nproc}" ],
+        [ "echo", "Target triplet: ${target_triplet}" ],
+        [ "echo", "Host triplet: ${host_triplet}" ],
+        [ "echo", "Binary package prefix: ${bin_package_prefix}" ],
+        [ "echo", "Version: ${version}" ],
+        [ "echo", "\\$$PATH: $PATH" ],
+        [ "echo", "\\$$\\$$: $$" ]
+    ]
+}
