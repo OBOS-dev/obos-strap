@@ -4,6 +4,7 @@
  * Copyright (c) 2024-2025 Omar Berrow
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -323,10 +324,13 @@ int main(int argc, char **argv)
     cJSON* prefix_override = cJSON_GetObjectItem(context, "prefix-override");
     if (!cJSON_IsString(prefix_override))
         prefix_override = NULL;
+    cJSON* host_prefix_override = cJSON_GetObjectItem(context, "host-prefix-override");
+    if (!cJSON_IsString(host_prefix_override))
+        host_prefix_override = NULL;
     root_directory = realpath(root_directory, NULL);
     pkg_info_directory = realpath(pkg_info_directory, NULL);
     prefix_directory = realpath(prefix_override ? cJSON_GetStringValue(prefix_override) : prefix_directory, NULL);
-    host_prefix_directory = realpath(host_prefix_directory, NULL);
+    host_prefix_directory = realpath(host_prefix_override ? cJSON_GetStringValue(host_prefix_override) : host_prefix_directory, NULL);
     binary_package_directory = realpath(binary_package_directory, NULL);
     bootstrap_directory = realpath(bootstrap_directory, NULL);
     repo_directory = realpath(repo_directory, NULL);
