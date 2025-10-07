@@ -346,6 +346,16 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    do {
+        const char* old_path = getenv("PATH");
+        assert(old_path);
+        size_t len_new_path = snprintf(NULL, 0, "%s:%s/bin", old_path, host_prefix_directory);
+        char* new_path = malloc(len_new_path+1);
+        snprintf(new_path, len_new_path+1, "%s:%s/bin", old_path, host_prefix_directory);
+        setenv("PATH", new_path, 1);
+        free(new_path);
+    } while(0);
+
     cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
     g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
     child = cJSON_GetObjectItem(context, "binary-packages-default");
