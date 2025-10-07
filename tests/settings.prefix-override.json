@@ -1,0 +1,4 @@
+{
+    "cross-compile": 0,
+    "prefix-override": "/usr/"
+}
