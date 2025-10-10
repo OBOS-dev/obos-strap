@@ -56,7 +56,6 @@ void lock()
     }
     sem_wait(current_lock);
     atexit(unlock);
-    return;
 #endif
     signal(SIGINT, unlock_sig);
     signal(SIGSEGV, unlock_sig);
