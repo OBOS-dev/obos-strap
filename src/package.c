@@ -1015,6 +1015,12 @@ void foreach_package(bool installed_only, int(*cb)(package* pkg, struct pkginfo*
             pkg_name[len_recipe_name] = 0;
         }
         package* pkg = get_package(pkg_name);
+        if (!pkg)
+        {
+            printf("Warning: Could not get package '%s'\n", pkg_name);
+            free(pkg_name);
+            continue;
+        }
         struct pkginfo* info = read_package_info_ex(pkg_name, false, false);
         if (cb(pkg, info, userdata) != 0)
         {
