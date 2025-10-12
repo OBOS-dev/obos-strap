@@ -356,6 +356,14 @@ int main(int argc, char **argv)
         free(new_path);
     } while(0);
 
+    do {
+        size_t len_new_path = snprintf(NULL, 0, "%s/lib/pkgconfig", prefix_directory);
+        char* new_path = malloc(len_new_path+1);
+        snprintf(new_path, len_new_path+1, "%s/lib/pkgconfig", prefix_directory);
+        setenv("PKG_CONFIG_PATH", new_path, 1);
+        free(new_path);
+    } while(0);
+
     cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
     g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
     child = cJSON_GetObjectItem(context, "binary-packages-default");
