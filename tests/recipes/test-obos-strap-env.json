@@ -1,0 +1,16 @@
+{
+    "name": "test-obos-strap-env",
+    "description": "Tests the environment setting of obos-strap",
+    "version": [ 0,0,1 ],
+    "depends": [],
+    "patches": [],
+    "bootstrap-commands": [],
+    "build-commands": [],
+    "install-commands": [],
+    "run-commands": [
+        [ "echo", "Testing \\$$TEST_OBOS_STRAP_ENV" ],
+        [ "echo", "$TEST_OBOS_STRAP_ENV" ],
+        [ "echo", "Testing \\$$\\$$TEST_OBOS_STRAP_ENV" ],
+        [ "echo", "$$TEST_OBOS_STRAP_ENV" ]
+    ]
+}

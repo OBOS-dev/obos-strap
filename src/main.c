@@ -364,6 +364,35 @@ int main(int argc, char **argv)
         free(new_path);
     } while(0);
 
+extern const char* get_str_field_subst(cJSON* parent, const char* fieldname, package* pkg);
+    do {
+        cJSON* child = cJSON_GetObjectItem(context, "environment");
+        if (!child)
+            break;
+        cJSON *i = NULL;
+        cJSON_ArrayForEach(i, child)
+        {
+            const char* env = get_str_field_subst(i, "env", NULL);
+            const char* val = get_str_field_subst(i, "value", NULL);
+            if (!env)
+            {
+                fprintf(stderr, "Invalid environment object in settings.json\n");
+                continue;
+            }
+            if (!val)
+            {
+                unsetenv(env);
+                continue;
+            }
+            cJSON* replace_obj = cJSON_GetObjectItem(i, "replace");
+            bool replace = true;
+            if (replace_obj && cJSON_IsBool(replace_obj))
+                replace = cJSON_IsTrue(replace_obj);
+            if (setenv(env, val, replace) == -1)
+                perror("Warning: Could not setenv");            
+        }
+    } while(0);
+
     cJSON* child = cJSON_GetObjectItem(context, "cross-compile");
     g_config.cross_compiling = child ? !!cJSON_GetNumberValue(child) : false;
     child = cJSON_GetObjectItem(context, "binary-packages-default");

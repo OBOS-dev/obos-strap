@@ -160,7 +160,7 @@ static const char* get_str_field(cJSON* parent, const char* fieldname)
     cJSON* child = cJSON_GetObjectItem(parent, fieldname);
     return cJSON_GetStringValue(child);
 }
-static const char* get_str_field_subst(cJSON* parent, const char* fieldname, package* pkg)
+const char* get_str_field_subst(cJSON* parent, const char* fieldname, package* pkg)
 {
     const char* field = get_str_field(parent, fieldname);
     if (!field)
@@ -299,12 +299,12 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = bootstrap_directory;
                 subst_len = strlen(subst_str);
             }
-            else if (strncmp(subst_str, "name", subst_len) == 0)
+            else if (strncmp(subst_str, "name", subst_len) == 0 && pkg)
             {
                 subst_str = pkg->name;
                 subst_len = strlen(pkg->name);
             }
-            else if (strncmp(subst_str, "description", subst_len) == 0)
+            else if (strncmp(subst_str, "description", subst_len) == 0 && pkg)
             {
                 subst_str = pkg->description;
                 subst_len = strlen(pkg->description);
@@ -314,7 +314,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = repo_directory;
                 subst_len = strlen(subst_str);
             }
-            else if (strncmp(subst_str, "prefix", subst_len) == 0)
+            else if (strncmp(subst_str, "prefix", subst_len) == 0 && pkg)
             {
                 subst_str = pkg->host_package ? host_prefix_directory : prefix_directory;
                 subst_len = strlen(subst_str);
@@ -352,7 +352,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 subst_str = g_config.host_triplet;
                 subst_len = strlen(subst_str);
             }
-            else if (strncmp(subst_str, "version", subst_len) == 0)
+            else if (strncmp(subst_str, "version", subst_len) == 0 && pkg)
             {
                 subst_free = true;
                 subst_len = snprintf(NULL, 0, "%u.%u.%u", pkg->version.major, pkg->version.minor, pkg->version.patch);
@@ -360,7 +360,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
                 snprintf((char*)subst_str, subst_len+1, "%u.%u.%u", pkg->version.major, pkg->version.minor, pkg->version.patch);
                 ((char*)subst_str)[subst_len] = 0;
             }
-            else if (strncmp(subst_str, "bin_package_prefix", subst_len) == 0)
+            else if (strncmp(subst_str, "bin_package_prefix", subst_len) == 0 && pkg)
             {
                 subst_str = package_make_bin_prefix(pkg);
                 subst_len = strlen(pkg->bin_package_prefix);

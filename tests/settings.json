@@ -1,3 +1,10 @@
 {
-    "cross-compile": 0
+    "cross-compile": 0,
+    "environment": [
+        {
+            "env": "TEST_OBOS_STRAP_ENV",
+            "value": "If you see this, then it works.",
+            "replace": true
+        }
+    ]
 }
