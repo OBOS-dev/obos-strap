@@ -349,9 +349,9 @@ int main(int argc, char **argv)
     do {
         const char* old_path = getenv("PATH");
         assert(old_path);
-        size_t len_new_path = snprintf(NULL, 0, "%s:%s/bin", old_path, host_prefix_directory);
+        size_t len_new_path = snprintf(NULL, 0, "%s/bin:%s", host_prefix_directory, old_path);
         char* new_path = malloc(len_new_path+1);
-        snprintf(new_path, len_new_path+1, "%s:%s/bin", old_path, host_prefix_directory);
+        snprintf(new_path, len_new_path+1, "%s/bin:%s", host_prefix_directory, old_path);
         setenv("PATH", new_path, 1);
         free(new_path);
     } while(0);
