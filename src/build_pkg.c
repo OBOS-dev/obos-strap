@@ -580,6 +580,7 @@ void run_pkg(const char* name)
         cleanup_curl(curl_hnd);
     }
     free(info);
+    chdir(root_directory);
     printf("Running %s, '%s'.\n", pkg->name, pkg->description);
     command_array_run(&pkg->run_commands, NULL);
     unlock();
