@@ -6,13 +6,13 @@
     "depends": [ "bash>=5.3.0" ],
     "patches": [],
     "bootstrap-commands": [
-        [ "${repo_directory}/hello-2.12.1/configure", "--prefix", "/" ]
+        [ "${repo_directory}/hello-2.12.2/configure", "--prefix", "${prefix}" ]
     ],
     "build-commands": [
         [ "make", "all" ]
     ],
     "install-commands": [
-        [ "make", "install", "prefix=${prefix}" ],
-        [ "make", "install", "prefix=${bin_package_prefix}/usr" ]
+        [ "make", "install", "DESTDIR=${destdir}" ],
+        [ "make", "install", "DESTDIR=${bin_package_prefix}/usr" ]
     ]
 }
