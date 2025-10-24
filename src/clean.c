@@ -29,10 +29,10 @@ void clean()
 {
     remove_recursively(pkg_info_directory);
     remove_recursively(bootstrap_directory);
-    remove_recursively(prefix_directory);
+    remove_recursively(destination_directory);
     remove_recursively(host_prefix_directory);
     remove_recursively(repo_directory);
-    if (mkdir(prefix_directory, 0755) == -1)
+    if (mkdir(destination_directory, 0755) == -1)
     {
         perror("mkdir");
         return;

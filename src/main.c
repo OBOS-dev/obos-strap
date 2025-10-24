@@ -41,7 +41,8 @@
  * git repos - DONE
  */
 
-const char* prefix_directory = "./pkgs";
+const char* destination_directory = "./pkgs";
+const char* prefix_directory = "/usr"; // Sensible default.
 const char* host_prefix_directory = "./host_pkgs";
 const char* root_directory = ".";
 const char* binary_package_directory = "./bin_pkgs/";
@@ -220,9 +221,9 @@ int main(int argc, char **argv)
 
         struct stat tmp = {};
 
-        if (stat(prefix_directory, &tmp) == -1)
+        if (stat(destination_directory, &tmp) == -1)
         {
-            if (mkdir(prefix_directory, st.st_mode | 0200) == -1)
+            if (mkdir(destination_directory, st.st_mode | 0200) == -1)
             {
                 perror("mkdir");
                 return -1;
@@ -321,6 +322,9 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    cJSON* destination_override = cJSON_GetObjectItem(context, "destination-override");
+    if (!cJSON_IsString(destination_override))
+        destination_override = NULL;
     cJSON* prefix_override = cJSON_GetObjectItem(context, "prefix-override");
     if (!cJSON_IsString(prefix_override))
         prefix_override = NULL;
@@ -329,7 +333,9 @@ int main(int argc, char **argv)
         host_prefix_override = NULL;
     root_directory = realpath(root_directory, NULL);
     pkg_info_directory = realpath(pkg_info_directory, NULL);
-    prefix_directory = realpath(prefix_override ? cJSON_GetStringValue(prefix_override) : prefix_directory, NULL);
+    destination_directory = realpath(destination_override ? cJSON_GetStringValue(destination_override) : destination_directory, NULL);
+    if (prefix_override)
+        prefix_directory = cJSON_GetStringValue(prefix_override);
     host_prefix_directory = realpath(host_prefix_override ? cJSON_GetStringValue(host_prefix_override) : host_prefix_directory, NULL);
     binary_package_directory = realpath(binary_package_directory, NULL);
     bootstrap_directory = realpath(bootstrap_directory, NULL);
@@ -340,7 +346,7 @@ int main(int argc, char **argv)
         printf("FATAL: Recipes directory does not exist.\n");
         return -1;
     }
-    if (!pkg_info_directory || !prefix_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory || !binary_package_directory)
+    if (!pkg_info_directory || !destination_directory || !bootstrap_directory || !repo_directory || !host_prefix_directory || !binary_package_directory)
     {
         printf("One or more required directories are missing. Did you forget to run %s setup-env after cleaning?\n", g_argv[0]);
         return -1;
@@ -357,9 +363,9 @@ int main(int argc, char **argv)
     } while(0);
 
     do {
-        size_t len_new_path = snprintf(NULL, 0, "%s/lib/pkgconfig", prefix_directory);
+        size_t len_new_path = snprintf(NULL, 0, "%s/lib/pkgconfig", destination_directory);
         char* new_path = malloc(len_new_path+1);
-        snprintf(new_path, len_new_path+1, "%s/lib/pkgconfig", prefix_directory);
+        snprintf(new_path, len_new_path+1, "%s/lib/pkgconfig", destination_directory);
         setenv("PKG_CONFIG_PATH", new_path, 1);
         free(new_path);
     } while(0);
@@ -622,7 +628,7 @@ extern const char* get_str_field_subst(cJSON* parent, const char* fieldname, pac
             printf("%s chroot cmd [args...]\n", argv[0]);
             return -1;
         }
-        if (chroot(prefix_directory) == -1)
+        if (chroot(destination_directory) == -1)
         {
             perror("chroot");
             return -1;
