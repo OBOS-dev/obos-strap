@@ -9,6 +9,8 @@
 #include <stdbool.h>
 
 // Final install directory.
+extern const char* destination_directory;
+// The target's PREFIX
 extern const char* prefix_directory;
 // Final install directory for host packages.
 extern const char* host_prefix_directory;

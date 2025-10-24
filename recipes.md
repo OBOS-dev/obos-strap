@@ -59,6 +59,7 @@ bootstrap_directory: Output of bootstrap commands goes here, as well as built bi
              prefix: The prefix directory. This can change depending on whether this is a host package or not.
         host_prefix: The host prefix directory.
       target_prefix: The target prefix directory.
+            destdir: The DESTDIR for target packages.
               nproc: The CPU count of the system.
      target_triplet: The target triplet.
        host_triplet: The host triplet.
