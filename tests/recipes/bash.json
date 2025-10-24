@@ -6,13 +6,13 @@
     "depends": [],
     "patches": [],
     "bootstrap-commands": [
-        [ "${repo_directory}/bash-5.3/configure", "--prefix", "/" ]
+        [ "${repo_directory}/bash-5.3/configure", "--prefix", "${prefix}" ]
     ],
     "build-commands": [
         [ "make", "all" ]
     ],
     "install-commands": [
-        [ "make", "install", "DESTDIR=${prefix}" ],
+        [ "make", "install", "DESTDIR=${destdir}" ],
         [ "make", "install", "DESTDIR=${bin_package_prefix}/usr" ]
     ]
 }
