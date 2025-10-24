@@ -316,7 +316,7 @@ static int parse_dollar_sign(char* dollar_sign, const char* fieldname, char** co
             }
             else if (strncmp(subst_str, "destdir", subst_len) == 0 && pkg)
             {
-                subst_str = pkg->host_package ? host_prefix_directory : destination_directory;
+                subst_str = destination_directory;
                 subst_len = strlen(subst_str);
             }
             else if (strncmp(subst_str, "target_prefix", subst_len) == 0)
