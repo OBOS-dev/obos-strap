@@ -275,7 +275,7 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         if (!ec)
         {
             // It exists.
-            printf("%s provided by host package %s is already installed from an external source. Assuming it works...\n", pkg->host_provides, pkg->name);
+            // printf("%s provided by host package %s is already installed from an external source. Assuming it works...\n", pkg->host_provides, pkg->name);
             struct pkginfo* info = read_package_info(pkg->name);
             info->build_state = BUILD_STATE_INSTALLED;
 
