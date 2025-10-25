@@ -39,11 +39,11 @@ static void build_binary_pkg_dependencies(package* pkg);
 
 static void create_pkg(package* pkg, bool build_dependencies)
 {
-    if (!pkg->supports_binary_packages)
-        return;
-
     if (build_dependencies)
         build_binary_pkg_dependencies(pkg);
+
+    if (!pkg->supports_binary_packages)
+        return;
 
     (void)package_make_bin_prefix(pkg);
 
