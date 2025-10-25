@@ -99,6 +99,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
         char* depend_expr = pkg->depends.buf[i];
         char* depend = NULL;
         int how_cmp = 0;
+
         parse_depend_expr(depend_expr, &depend, &version, &how_cmp);
         if (!depend)
         {
@@ -106,6 +107,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
             unlock();
             return;
         }
+
         package* depend_pkg = get_package(depend);
         if (!depend_pkg)
         {
@@ -113,6 +115,15 @@ static void create_pkg(package* pkg, bool build_dependencies)
             unlock();
             return;
         }
+
+        size_t depend_expr_len = strlen(depend_expr);
+
+        // NOTE(oberrow): We use a dash here instead of an equal sign because xbps uses
+        // a dash to communicate the exact package name and version, unlike obos-strap
+        // which uses equal signs
+        if (how_cmp == VERSION_CMP_NONE)
+            depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
+
         if (!do_version_cmp(how_cmp, depend_pkg->version, version))
         {
             fprintf(stderr, "%s: Could not satisfy dependency. Requires: %s, got: %s=%d.%d.%d. Aborting\n",
@@ -124,8 +135,11 @@ static void create_pkg(package* pkg, bool build_dependencies)
             unlock();
             return;
         }
+
+        // TODO: Handle the case if it doesn't (add the dependencies of the dependency to the list)
         if (depend_pkg->supports_binary_packages)
-            depends_str_len += strlen(depend_expr)+1;
+            depends_str_len += depend_expr_len+1;
+
         free(depend_pkg);
     }
     if (depends_str_len)
@@ -140,6 +154,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
             char* depend_expr = pkg->depends.buf[i];
             char* depend = NULL;
             int how_cmp = 0;
+
             parse_depend_expr(depend_expr, &depend, &version, &how_cmp);
             if (!depend)
             {
@@ -147,12 +162,29 @@ static void create_pkg(package* pkg, bool build_dependencies)
                 unlock();
                 return;
             }
+
             package* depend_pkg = get_package(depend);
+            
             if (depend_pkg->supports_binary_packages)
             {
+                if (how_cmp == VERSION_CMP_NONE)
+                {
+                    size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
+                    depend_expr = malloc(depend_expr_len+1);
+                    snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
+                }
+                else if (how_cmp == VERSION_CMP_EQUAL)
+                {
+                    size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
+                    depend_expr = malloc(depend_expr_len+1);
+                    snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
+                }
                 strcat(depends_str, depend_expr);
                 strcat(depends_str, " ");
+                if (how_cmp == VERSION_CMP_NONE || how_cmp == VERSION_CMP_EQUAL)
+                    free(depend_expr);
             }
+
             free(depend_pkg);
         }
         depends_str[depends_str_len-1] = 0;
