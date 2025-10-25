@@ -39,6 +39,9 @@ static void build_binary_pkg_dependencies(package* pkg);
 
 static void create_pkg(package* pkg, bool build_dependencies)
 {
+    if (!pkg->supports_binary_packages)
+        return;
+
     if (build_dependencies)
         build_binary_pkg_dependencies(pkg);
 
@@ -77,6 +80,18 @@ static void create_pkg(package* pkg, bool build_dependencies)
     size_t package_version_len = snprintf(NULL, 0, "%s-%d.%d_%d", pkg->name, pkg->version.major, pkg->version.minor, pkg->version.patch);
     char* package_version = malloc(package_version_len+1);
     snprintf(package_version, package_version_len+1, "%s-%d.%d_%d", pkg->name, pkg->version.major, pkg->version.minor, pkg->version.patch);
+    
+    size_t len_package_filename = snprintf(NULL, 0, "%s.%s.xbps", package_version, architecture);
+    char* package_filename = malloc(len_package_filename+1);
+    snprintf(package_filename, len_package_filename+1, "%s.%s.xbps", package_version, architecture);
+    if (stat(package_filename, &st) == 0)
+    {
+        free(architecture);
+        free(package_version);
+        free(package_filename);
+        return;
+    }
+    
     size_t depends_str_len = 0;
     for (size_t i = 0; i < pkg->depends.cnt; i++)
     {
@@ -157,10 +172,6 @@ static void create_pkg(package* pkg, bool build_dependencies)
     string_array_append(&xbps_create_cmd.argv, "-s");
     string_array_append(&xbps_create_cmd.argv, pkg->description);
     string_array_append(&xbps_create_cmd.argv, pkg->bin_package_prefix);
-
-    size_t len_package_filename = snprintf(NULL, 0, "%s.%s.xbps", package_version, architecture);
-    char* package_filename = malloc(len_package_filename+1);
-    snprintf(package_filename, len_package_filename+1, "%s.%s.xbps", package_version, architecture);
 
     free(architecture);
     free(package_version);
