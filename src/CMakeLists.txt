@@ -14,8 +14,10 @@ target_compile_options(obos-strap PRIVATE "-Wall"
                                   PRIVATE "-Wextra"
                                   PRIVATE "-Wno-unused-label")
 
-target_link_libraries(obos-strap PRIVATE "${CJSON_LIBRARIES}")
-target_include_directories(obos-strap PRIVATE "${CJSON_INCLUDE_DIR}")
+if (NOT WE_ARE_REALLY_OBOS)
+    target_link_libraries(obos-strap PRIVATE "${CJSON_LIBRARIES}")
+    target_include_directories(obos-strap PRIVATE "${CJSON_INCLUDE_DIR}")
+endif()
 
 if (HAS_CURL)
     target_include_directories(obos-strap PRIVATE ${CURL_INCLUDE_DIR})

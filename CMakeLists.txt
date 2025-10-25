@@ -20,7 +20,11 @@ set_property(GLOBAL PROPERTY C_STANDARD 17
                     PROPERTY C_STANDARD_REQUIRED true
                     PROPERTY C_EXTENSIONS On)
 
-find_package(cJSON REQUIRED)
+if (NOT WE_ARE_REALLY_OBOS)
+    find_package(cJSON REQUIRED)
+else()
+    link_libraries(cjson)
+endif()
 
 find_package(CURL)
 
