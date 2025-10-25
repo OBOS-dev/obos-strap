@@ -236,7 +236,7 @@ static void build_binary_pkg_dependencies(package* pkg)
     for (size_t i = 0; i < pkg->depends.cnt; i++)
     {
         package* dependency = get_package(pkg->depends.buf[i]);
-        if (dependency && dependency->supports_binary_packages)
+        if (dependency)
             create_pkg(dependency, true);
     }
 }
