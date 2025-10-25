@@ -60,6 +60,9 @@ static void create_pkg(package* pkg, bool build_dependencies)
         fprintf(stderr, "%s is not a directory\n", pkg->bin_package_prefix);
         return;
     }
+    if (chdir(pkg->bin_package_prefix) == -1)
+        abort();
+    remove("usr/share/info/dir");    
 #ifndef NDEBUG
     printf("Entering directory %s\n", binary_package_directory);
 #endif
