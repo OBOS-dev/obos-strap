@@ -42,9 +42,6 @@ static void create_pkg(package* pkg, bool build_dependencies)
     if (build_dependencies)
         build_binary_pkg_dependencies(pkg);
 
-    if (!pkg->supports_binary_packages)
-        return;
-
     (void)package_make_bin_prefix(pkg);
 
     struct stat st = {};
@@ -139,9 +136,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
             return;
         }
 
-        // TODO: Handle the case if it doesn't (add the dependencies of the dependency to the list)
-        if (depend_pkg->supports_binary_packages)
-            depends_str_len += depend_expr_len+1;
+        depends_str_len += depend_expr_len+1;
 
         free(depend_pkg);
     }
@@ -168,25 +163,22 @@ static void create_pkg(package* pkg, bool build_dependencies)
 
             package* depend_pkg = get_package(depend);
             
-            if (depend_pkg->supports_binary_packages)
+            if (how_cmp == VERSION_CMP_NONE)
             {
-                if (how_cmp == VERSION_CMP_NONE)
-                {
-                    size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
-                    depend_expr = malloc(depend_expr_len+1);
-                    snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
-                }
-                else if (how_cmp == VERSION_CMP_EQUAL)
-                {
-                    size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
-                    depend_expr = malloc(depend_expr_len+1);
-                    snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
-                }
-                strcat(depends_str, depend_expr);
-                strcat(depends_str, " ");
-                if (how_cmp == VERSION_CMP_NONE || how_cmp == VERSION_CMP_EQUAL)
-                    free(depend_expr);
+                size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
+                depend_expr = malloc(depend_expr_len+1);
+                snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
             }
+            else if (how_cmp == VERSION_CMP_EQUAL)
+            {
+                size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
+                depend_expr = malloc(depend_expr_len+1);
+                snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
+            }
+            strcat(depends_str, depend_expr);
+            strcat(depends_str, " ");
+            if (how_cmp == VERSION_CMP_NONE || how_cmp == VERSION_CMP_EQUAL)
+                free(depend_expr);
 
             free(depend_pkg);
         }
@@ -264,13 +256,6 @@ void build_binary_package(const char* name)
     cleanup_curl(curl_hnd);
 
     build_binary_pkg_dependencies(pkg);
-
-    if (!pkg->supports_binary_packages)
-    {
-        printf("Package does not support binary packaging.\n");
-        unlock();
-        return;
-    }
 
     create_pkg(pkg, false);
     
