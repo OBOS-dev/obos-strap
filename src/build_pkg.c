@@ -263,6 +263,28 @@ static bool fetch(package* pkg, curl_handle curl_hnd)
     return fetched;
 }
 
+static void remove_bin_pkg(package* pkg)
+{
+    const char* triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+
+    size_t len_arch = strchr(triplet, '-') - triplet;
+    char* architecture = memcpy(malloc(len_arch+1), triplet, len_arch);
+    architecture[len_arch] = 0;
+    size_t package_version_len = snprintf(NULL, 0, "%s-%d.%d_%d", pkg->name, pkg->version.major, pkg->version.minor, pkg->version.patch);
+
+    char* package_version = malloc(package_version_len+1);
+    snprintf(package_version, package_version_len+1, "%s-%d.%d_%d", pkg->name, pkg->version.major, pkg->version.minor, pkg->version.patch);
+    size_t len_package_filename = snprintf(NULL, 0, "%s/%s.%s.xbps", binary_package_directory, package_version, architecture);
+
+    char* package_filename = malloc(len_package_filename+1);
+    snprintf(package_filename, len_package_filename+1, "%s/%s.%s.xbps", binary_package_directory, package_version, architecture);
+    remove(package_filename);
+
+    free(package_filename);
+    free(architecture);
+    free(package_version);
+}
+
 bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies)
 {
     if (pkg->host_package && pkg->host_provides)
@@ -360,7 +382,8 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
         info->configure_date = (struct timeval){};
         info->build_date = (struct timeval){};
         info->install_date = (struct timeval){};
-        write_package_info(pkg->name, info);    
+        write_package_info(pkg->name, info);
+        remove_bin_pkg(pkg);
     }
     if (info->build_state < BUILD_STATE_FETCHED)
     {
@@ -599,6 +622,7 @@ void rebuild_pkg(const char* name)
     struct pkginfo* info = read_package_info(name);
     bool install = info->build_state == BUILD_STATE_INSTALLED;
     info->build_state = BUILD_STATE_CLEAN;
+    remove_bin_pkg(pkg);
     write_package_info(name, info);
     free(info);
     printf("Rebuilding %s, '%s'.\n", pkg->name, pkg->description);
