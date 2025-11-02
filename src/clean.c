@@ -30,9 +30,15 @@ void clean()
     remove_recursively(pkg_info_directory);
     remove_recursively(bootstrap_directory);
     remove_recursively(destination_directory);
+    remove_recursively(binary_package_directory);
     remove_recursively(host_prefix_directory);
     remove_recursively(repo_directory);
     if (mkdir(destination_directory, 0755) == -1)
+    {
+        perror("mkdir");
+        return;
+    }
+    if (mkdir(binary_package_directory, 0755) == -1)
     {
         perror("mkdir");
         return;
