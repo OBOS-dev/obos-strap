@@ -85,12 +85,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
     char* package_filename = malloc(len_package_filename+1);
     snprintf(package_filename, len_package_filename+1, "%s.%s.xbps", package_version, architecture);
     if (stat(package_filename, &st) == 0)
-    {
-        free(architecture);
-        free(package_version);
-        free(package_filename);
-        return;
-    }
+        remove(package_filename);
     
     size_t depends_str_len = 0;
     for (size_t i = 0; i < pkg->depends.cnt; i++)
