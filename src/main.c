@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <strings.h>
 #include <cjson/cJSON.h>
+#include <time.h>
 
 #include "lock.h"
 #include "package.h"
