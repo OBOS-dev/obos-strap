@@ -55,6 +55,11 @@ _foo()
 }
 
 complete -F _foo obos-strap
+case $OSTYPE in
+    "mingw*" | "msys2" | "win32"  | "cygwin")
+    complete -F _foo obos-strap.exe
+    ;;
+esac
 
 if [[ -v old_comp_wordbreaks ]]
 then
