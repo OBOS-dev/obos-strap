@@ -18,7 +18,9 @@ Examples can be found under [tests/recipes](tests/recipes)
 #### url: string
 - The URL to an archive. This archive must be of format '.tar.*'.<br/>
 #### depends: string array (required)
-- Dependencies of the project. These will be build before the requested package is built.<br/>
+- Dependencies of the project at runtime. These dependencies are included in the xbps package
+#### build-depends: string arrays (required)
+- Dependencies of the package at compile time. These Dependencies are not included in the xbps package
 #### patches: patch array (optional)
 - An array of patches that should be applied before bootstrap commands are run.<br/>
 - A patch is defined as follows:
