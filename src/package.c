@@ -624,6 +624,13 @@ package* get_package(const char* pkg_name)
         return NULL;
     }
 
+    if (get_str_array_field(context, "build-depends", &pkg->build_depends) != 0)
+    {
+        printf("%s: Invalid format or missing field 'build-depends' in package JSON.\n", g_argv[0]);
+        free(json_data);
+        return NULL;
+    }
+
     do {
         cJSON* child = cJSON_GetObjectItem(context, "host-package");
         pkg->host_package = !child ? false : (!!cJSON_GetNumberValue(child) && g_config.cross_compiling);

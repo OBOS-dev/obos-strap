@@ -285,38 +285,13 @@ static void remove_bin_pkg(package* pkg)
     free(package_version);
 }
 
-bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies)
+bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies);
+
+static bool build_dependencies(package* pkg, string_array* arr, curl_handle curl_hnd)
 {
-    if (pkg->host_package && pkg->host_provides)
+    for (size_t i = 0; i < arr->cnt; i++)
     {
-        // Hopefully this doesn't hang.
-        string_array argv = {};
-        string_array_append(&argv, pkg->host_provides);
-        string_array_append(&argv, "-v");
-        int ec = run_command_supress_output(pkg->host_provides, argv);
-        if (!ec)
-        {
-            // It exists.
-            // printf("%s provided by host package %s is already installed from an external source. Assuming it works...\n", pkg->host_provides, pkg->name);
-            struct pkginfo* info = read_package_info(pkg->name);
-            info->build_state = BUILD_STATE_INSTALLED;
-
-            const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
-            info->host_triplet_len = strlen(triplet);
-            info = realloc(info, sizeof(*info) + info->host_triplet_len);
-            assert(info);
-            memcpy(info->host_triplet, triplet, info->host_triplet_len);
-            info->cross_compiled = g_config.cross_compiling;
-
-            write_package_info(pkg->name, info);
-            return true;
-        }
-    }
-
-    // Satisfy dependencies.
-    for (size_t i = 0; i < pkg->depends.cnt && satisfy_dependencies; i++)
-    {
-        const char* depend_expr = pkg->depends.buf[i];
+        const char* depend_expr = arr->buf[i];
         char* depend = NULL;
         union package_version depend_version = {};
         int version_cmp = 0;
@@ -348,19 +323,48 @@ bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool s
             );
             return false;
         }
-        // TODO: Make non-recursive?
-        // struct pkginfo* info = read_package_info(pkg->name);
-        // if ((info->build_state < (BUILD_STATE_BUILT+install)) || (version_cmp == VERSION_CMP_NONE ? false : version_less_than(info->version, depend_pkg->version) ))
-        //     printf("Building dependency %s, '%s'\n", depend_pkg->name, depend_pkg->description);
-        // else
-        // {
-        //     free(info);
-        //     continue;
-        // }
-        // free(info);
         if (depend != depend_expr)
             free(depend);
-        if (!build_pkg_internal(depend_pkg, curl_hnd, install, satisfy_dependencies))
+        if (!build_pkg_internal(depend_pkg, curl_hnd, true, true))
+            return false;
+    }
+    return true;
+}
+
+bool build_pkg_internal(package* pkg, curl_handle curl_hnd, bool install, bool satisfy_dependencies)
+{
+    if (pkg->host_package && pkg->host_provides)
+    {
+        // Hopefully this doesn't hang.
+        string_array argv = {};
+        string_array_append(&argv, pkg->host_provides);
+        string_array_append(&argv, "-v");
+        int ec = run_command_supress_output(pkg->host_provides, argv);
+        if (!ec)
+        {
+            // It exists.
+            // printf("%s provided by host package %s is already installed from an external source. Assuming it works...\n", pkg->host_provides, pkg->name);
+            struct pkginfo* info = read_package_info(pkg->name);
+            info->build_state = BUILD_STATE_INSTALLED;
+
+            const char *triplet = pkg->host_package ? g_config.host_triplet : g_config.target_triplet;
+            info->host_triplet_len = strlen(triplet);
+            info = realloc(info, sizeof(*info) + info->host_triplet_len);
+            assert(info);
+            memcpy(info->host_triplet, triplet, info->host_triplet_len);
+            info->cross_compiled = g_config.cross_compiling;
+
+            write_package_info(pkg->name, info);
+            return true;
+        }
+    }
+
+    // Satisfy dependencies.
+    if (satisfy_dependencies)
+    {
+        if (!build_dependencies(pkg, &pkg->build_depends, curl_hnd))
+            return false;
+        if (!build_dependencies(pkg, &pkg->depends, curl_hnd))
             return false;
     }
 

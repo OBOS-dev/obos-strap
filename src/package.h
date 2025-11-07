@@ -135,6 +135,7 @@ typedef struct package {
     patch_array patches;
 
     string_array depends;
+    string_array build_depends;
 
     command_array build_commands;
     command_array install_commands;
