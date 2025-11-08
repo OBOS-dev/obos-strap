@@ -17,6 +17,12 @@
     "url": {
       "type": "string"
     },
+    "host-provides": {
+      "type": "string"
+    },
+    "inhibit-auto-rebuild": {
+      "type": "string"
+    },
     "version": {
       "type": "array",
       "items": [
@@ -57,6 +63,18 @@
     },
     "host-package": {
       "type": "boolean"
+    }
+  },
+  "if": {
+    "anyOf": [
+      {"required": [ "git-commit" ]},
+      {"required": [ "git-url" ]}
+    ]
+  },
+  "then": {
+    "required": [ "git-commit", "git-url" ],
+    "not": {
+      "required": [ "url" ]
     }
   },
   "required": [
