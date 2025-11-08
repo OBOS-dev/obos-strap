@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "git-url": {
+      "type": "string"
+    },
+    "git-commit": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "version": {
+      "type": "array",
+      "items": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "depends": {
+      "type": "array",
+      "items": {}
+    },
+    "build-depends": {
+      "type": "array",
+      "items": {}
+    },
+    "patches": {
+      "type": "array",
+      "items": {}
+    },
+    "bootstrap-commands": {
+      "type": "array",
+      "items": {}
+    },
+    "build-commands": {
+      "type": "array",
+      "items": {}
+    },
+    "install-commands": {
+      "type": "array",
+      "items": {}
+    },
+    "host-package": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "version",
+    "depends",
+    "build-depends",
+    "patches",
+    "bootstrap-commands",
+    "build-commands",
+    "install-commands"
+  ]
+}
