@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
 
 #include "package.h"
 #include "lock.h"
@@ -48,7 +49,8 @@ static void create_pkg(package* pkg, bool build_dependencies)
     if (stat(pkg->bin_package_prefix, &st) == -1)
     {
         unlock();
-        perror("stat");
+        if (errno != ENOENT)
+            perror("stat");
         return;
     }
     if (!S_ISDIR(st.st_mode))
