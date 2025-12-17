@@ -5,7 +5,7 @@ _foo()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     cmd="${COMP_WORDS[1]}"
-    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated list"
+    opts="build clean build-all install-all rebuild setup-env force-unlock install chroot run update install-bin-pkg outdated list start-proc"
     export old_comp_wordbreaks="$COMP_WORDBREAKS"
 
     packages=""
@@ -32,7 +32,7 @@ _foo()
     then
         unset COMPREPLY
         return 0
-    elif [[ "${cmd}" == "chroot" ]]
+    elif [[ "${cmd}" == "chroot" || "${cmd}" == "start-proc" ]]
     then
         if [[ $COMP_CWORD > 2 ]]
         then

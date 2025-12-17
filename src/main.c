@@ -64,7 +64,7 @@ int g_argc = 0;
 char** g_argv = 0;
 
 const char* help =
-"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, list, update, install-bin-pkg, outdated\n";
+"build, clean, build-all/install-all, rebuild, setup-env, force-unlock, install, chroot, run, list, update, install-bin-pkg, outdated, start-proc\n";
 
 const char* version =
 "obos-strap v0.0.1\n"
@@ -632,6 +632,17 @@ extern const char* get_str_field_subst(cJSON* parent, const char* fieldname, pac
         if (chroot(destination_directory) == -1)
         {
             perror("chroot");
+            return -1;
+        }
+        execvp(argv[2], &argv[2]);
+        perror("execvp");
+        return -1;
+    }
+    else if (strcmp(argv[1], "start-proc") == 0)
+    {
+        if (argc < 3)
+        {
+            printf("%s start-proc cmd [args...]\n", argv[0]);
             return -1;
         }
         execvp(argv[2], &argv[2]);
