@@ -311,7 +311,7 @@ int main(int argc, char **argv)
     fstat(fileno(pkg_json), &st);
 
     char* json_data = malloc(st.st_size);
-    fread(json_data, st.st_size, st.st_size, pkg_json);
+    fread(json_data, st.st_size, 1, pkg_json);
 
     fclose(pkg_json);
 
