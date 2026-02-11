@@ -164,21 +164,27 @@ static void create_pkg(package* pkg, bool build_dependencies)
             }
 
             package* depend_pkg = get_package(depend);
+
+            const char* format = NULL;
+
+            switch (how_cmp) {
+                case VERSION_CMP_NONE:
+                    format = "%s>=%d.%d_%d";
+                    version = depend_pkg->version;
+                    break;
+                case VERSION_CMP_EQUAL:
+                    format = "%s-%d.%d_%d";
+                    break;
+                default: break;
+            }
             
-            if (how_cmp == VERSION_CMP_NONE)
-            {
-                size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
-                depend_expr = malloc(depend_expr_len+1);
-                snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
-            }
-            else if (how_cmp == VERSION_CMP_EQUAL)
-            {
-                size_t depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
-                depend_expr = malloc(depend_expr_len+1);
-                snprintf(depend_expr, depend_expr_len+1, "%s-%d.%d_%d", depend_pkg->name, version.major, version.minor, version.patch);
-            }
+            size_t depend_expr_len = snprintf(NULL, 0, format, depend_pkg->name, version.major, version.minor, version.patch);
+            depend_expr = malloc(depend_expr_len+1);
+            snprintf(depend_expr, depend_expr_len+1, format, depend_pkg->name, version.major, version.minor, version.patch);
+            
             strcat(depends_str, depend_expr);
             strcat(depends_str, " ");
+            
             if (how_cmp == VERSION_CMP_NONE || how_cmp == VERSION_CMP_EQUAL)
                 free(depend_expr);
 

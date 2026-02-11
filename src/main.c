@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
     if (strcmp(argv[1], "setup-env") == 0)
     {
-        printf("%s: Setting up enviornment\n", argv[0]);
+        printf("%s: Setting up environment\n", argv[0]);
         struct stat st = {};
         if (stat(recipes_directory, &st) == -1)
         {
