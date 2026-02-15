@@ -124,7 +124,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
         // a dash to communicate the exact package name and version, unlike obos-strap
         // which uses equal signs
         if (how_cmp == VERSION_CMP_NONE)
-            depend_expr_len = snprintf(NULL, 0, "%s-%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
+            depend_expr_len = snprintf(NULL, 0, "%s>=%d.%d_%d", depend_pkg->name, depend_pkg->version.major, depend_pkg->version.minor, depend_pkg->version.patch);
 
         if (!do_version_cmp(how_cmp, depend_pkg->version, version))
         {
@@ -175,12 +175,16 @@ static void create_pkg(package* pkg, bool build_dependencies)
                 case VERSION_CMP_EQUAL:
                     format = "%s-%d.%d_%d";
                     break;
-                default: break;
+                default:
+                    break;
             }
             
-            size_t depend_expr_len = snprintf(NULL, 0, format, depend_pkg->name, version.major, version.minor, version.patch);
-            depend_expr = malloc(depend_expr_len+1);
-            snprintf(depend_expr, depend_expr_len+1, format, depend_pkg->name, version.major, version.minor, version.patch);
+            if (format)
+            {
+                size_t depend_expr_len = snprintf(NULL, 0, format, depend_pkg->name, version.major, version.minor, version.patch);
+                depend_expr = malloc(depend_expr_len+1);
+                snprintf(depend_expr, depend_expr_len+1, format, depend_pkg->name, version.major, version.minor, version.patch);
+            }
             
             strcat(depends_str, depend_expr);
             strcat(depends_str, " ");
