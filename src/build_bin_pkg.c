@@ -233,7 +233,7 @@ static void create_pkg(package* pkg, bool build_dependencies)
     
     if (cmd_ret != 0)
     {
-        fprintf(stderr, "%s returned %d\n", xbps_create_cmd.proc, cmd_ret);
+        fprintf(stderr, "%s returned %d\n", xbps_rindex_cmd.proc, cmd_ret);
         goto done;
     }
 
