@@ -690,7 +690,7 @@ package* get_package(const char* pkg_name)
     }
     if (get_command_array(context, "build-commands", &pkg->build_commands) != 0)
     {
-        printf("%s: Invalid format or missing field 'bootstrap-commands' in package JSON.\n", g_argv[0]);
+        printf("%s: Invalid format or missing field 'build-commands' in package JSON.\n", g_argv[0]);
         free(json_data);
         free(pkg);
         cJSON_free(context);
@@ -698,7 +698,7 @@ package* get_package(const char* pkg_name)
     }
     if (get_command_array(context, "install-commands", &pkg->install_commands) != 0)
     {
-        printf("%s: Invalid format or missing field 'bootstrap-commands' in package JSON.\n", g_argv[0]);
+        printf("%s: Invalid format or missing field 'install-commands' in package JSON.\n", g_argv[0]);
         free(json_data);
         free(pkg);
         cJSON_free(context);
