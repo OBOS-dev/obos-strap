@@ -3,6 +3,7 @@
     "description": "empty",
     "version": [ 1,0,0 ],
     "depends": [],
+    "build-depends": [],
     "patches": [],
     "bootstrap-commands": [],
     "build-commands": [],

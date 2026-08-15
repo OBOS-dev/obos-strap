@@ -3,6 +3,7 @@
     "description": "Tests the environment setting of obos-strap",
     "version": [ 0,0,1 ],
     "depends": [],
+    "build-depends": [],
     "patches": [],
     "bootstrap-commands": [],
     "build-commands": [],

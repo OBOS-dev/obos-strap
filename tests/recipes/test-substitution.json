@@ -3,6 +3,7 @@
     "description": "Tests substitution",
     "version": [ 1,0,0 ],
     "depends": [],
+    "build-depends": [],
     "patches": [],
     "bootstrap-commands": [],
     "build-commands": [],
