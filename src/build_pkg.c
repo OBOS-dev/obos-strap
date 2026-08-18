@@ -15,6 +15,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <errno.h>
 
 #include "package.h"
 #include "path.h"
@@ -161,23 +162,77 @@ void remove_recursively(const char* path);
 static bool clone_repository(const char* pkg_name, const char* url, const char* hash)
 {
     const char* dir_name = strrchr(url, '/')+1;
-    string_array argv_rm = {};
-    string_array_append(&argv_rm, "rm");
-    string_array_append(&argv_rm, "-rf");
-    string_array_append(&argv_rm, dir_name);
-    run_command("rm", argv_rm);
-    string_array_free(&argv_rm);
-
-    // TODO: Use a library?
     string_array argv = {};
-    string_array_append(&argv, "git");
-    string_array_append(&argv, "clone");
-    string_array_append(&argv, "--depth=1");
-    string_array_append(&argv, "--recurse-submodules");
-    string_array_append(&argv, url);
-    string_array_append(&argv, "-b");
-    string_array_append(&argv, hash);
-    int ret = run_command("git", argv);
+
+    char* repository_name;
+    char* trailing_git = strstr(dir_name, ".git");
+    if (trailing_git) {
+        // remove trailing '.git'
+        repository_name = strndup(dir_name, strlen(dir_name) - 4);
+    } else {
+        repository_name = dir_name;
+    }
+
+    struct stat repo_dir;
+    int ret = stat(repository_name, &repo_dir);
+    if (ret != 0 && errno != ENOENT) {
+        perror("stat");
+        remove_recursively(pkg_name);
+        return false;
+    }
+
+    if (ret == 0)
+    {
+        // stat is ok and directory exists
+#ifndef NDEBUG
+        printf("Repository '%s' already exists, pulling\n", repository_name);
+#endif
+
+        // TODO: Use a library?
+        string_array_append(&argv, "git");
+        string_array_append(&argv, "-C");
+        string_array_append(&argv, repository_name);
+        string_array_append(&argv, "fetch");
+        string_array_append(&argv, "origin");
+        ret = run_command("git", argv);
+
+        if (ret != EXIT_SUCCESS) {
+            printf("Git fetch failed with code %d\n", ret);
+#ifndef NDEBUG
+            printf("Leaving directory %s\n", pkg_name);
+#endif
+            if (chdir("..") == -1)
+            {
+                perror("chdir");
+                remove_recursively(pkg_name);
+                return false;
+            }
+            remove_recursively(pkg_name);
+            return false;
+        }
+
+        string_array_free(&argv);
+        argv = (string_array){};
+
+        // TODO: Use a library?
+        string_array_append(&argv, "git");
+        string_array_append(&argv, "-C");
+        string_array_append(&argv, repository_name);
+        string_array_append(&argv, "rebase");
+        string_array_append(&argv, hash);
+    } else {
+        // directory doesn't exist (ENOENT), we'll clone
+        // TODO: Use a library?
+        string_array_append(&argv, "git");
+        string_array_append(&argv, "clone");
+        string_array_append(&argv, "--depth=1");
+        string_array_append(&argv, "--recurse-submodules");
+        string_array_append(&argv, url);
+        string_array_append(&argv, "-b");
+        string_array_append(&argv, hash);
+    }
+
+    ret = run_command("git", argv);
     if (ret != EXIT_SUCCESS)
     {
         printf("Git failed with exit code %d\n", ret);
