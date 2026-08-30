@@ -221,6 +221,7 @@ static bool clone_repository(const char* pkg_name, const char* url, const char* 
         string_array_append(&argv, "pull");
         string_array_append(&argv, "origin");
         string_array_append(&argv, hash);
+        string_array_append(&argv, "--autostash");
     } else {
         // directory doesn't exist (ENOENT), we'll clone
         // TODO: Use a library?
