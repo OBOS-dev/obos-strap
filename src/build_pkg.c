@@ -218,7 +218,8 @@ static bool clone_repository(const char* pkg_name, const char* url, const char* 
         string_array_append(&argv, "git");
         string_array_append(&argv, "-C");
         string_array_append(&argv, repository_name);
-        string_array_append(&argv, "rebase");
+        string_array_append(&argv, "pull");
+        string_array_append(&argv, "origin");
         string_array_append(&argv, hash);
     } else {
         // directory doesn't exist (ENOENT), we'll clone
